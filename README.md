@@ -75,6 +75,9 @@ prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
 - QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
   arbitrary combination of variants, so its code cannot be precomputed. The code
   grows on screen as the payload grows, so a full bag stays scannable.
+- A featured front page rather than a wall of 61 items: an AoIR2026 hero, the
+  nine conference pieces, then cards into the other three collections.
+  "All products" sits at the bottom of the rail as the fallback
 - Categories, cross-cutting collections, search, and five sort orders
 - Tap a product photo for a full-screen viewer: pinch, double-tap or the
   +/− buttons to zoom to 400%, drag to pan. Gallery images are 1400px so the

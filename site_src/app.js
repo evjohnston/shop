@@ -18,6 +18,9 @@
   const el = {
     landing: $("landing"), start: $("start"), shell: $("shell"),
     grid: $("grid"), menu: $("menu"), count: $("count"), scope: $("scope"),
+    homeView: $("home-view"), gridView: $("grid-view"),
+    heroArt: $("heroArt"), heroCta: $("heroCta"),
+    featGrid: $("featGrid"), collCards: $("collCards"),
     empty: $("empty"), q: $("q"), clearQ: $("clearQ"), searchWrap: $("searchWrap"),
     sort: $("sort"), home: $("home"),
     sheet: $("sheet"), back: $("back"), sheetTitle: $("sheetTitle"), sheetBody: $("sheetBody"),
@@ -37,7 +40,7 @@
   };
 
   let DATA = null;
-  let filter = "all";
+  let filter = "home";   // "home" = the featured front page
   let current = null, curColor = null, curSize = null;
   let bag = [];                       // [{id, qty, name, color, size, price, img}]
   const label = new Map();
@@ -175,7 +178,7 @@
   function visible() {
     const term = el.q.value.trim().toLowerCase();
     let list = DATA.products.filter((p) => {
-      if (filter !== "all") {
+      if (filter !== "all" && filter !== "home") {
         if (!(p.category === filter || p.collections.includes(filter))) return false;
       }
       if (!term) return true;
@@ -198,35 +201,97 @@
   }
 
   function render() {
+    // Searching always means results, even from the front page.
+    const searching = el.q.value.trim().length > 0;
+    const home = filter === "home" && !searching;
+    el.homeView.hidden = !home;
+    el.gridView.hidden = home;
+    if (home) {
+      renderHome();
+      window.scrollTo(0, 0);
+      return;
+    }
+
     const list = visible();
     el.grid.innerHTML = "";
     el.empty.hidden = list.length > 0;
     el.count.textContent = list.length ? `${list.length} item${list.length === 1 ? "" : "s"}` : "";
     const term = el.q.value.trim();
     el.scope.textContent = term ? `Search: ${term}`
-      : (filter === "all" ? "All products" : (label.get(filter) || ""));
+      : (filter === "all" ? "All products" : (label.get(filter) || "All products"));
 
     const frag = document.createDocumentFragment();
-    for (const p of list) {
-      const b = document.createElement("button");
-      b.className = "item";
-      b.type = "button";
-      const sw = p.colors.length > 1
-        ? `<div class="sw">${p.colors.slice(0, 7).map((c) =>
-            `<i style="background:${c.swatch || "#ddd"}"></i>`).join("")}` +
-          `${p.colors.length > 7 ? `<b>+${p.colors.length - 7}</b>` : ""}</div>`
-        : "";
-      b.innerHTML =
-        `<div class="plate"${p.card && p.card.bg ? ` style="background:${p.card.bg}"` : ""}>` +
-          `${p.card ? `<img src="${p.card.src}" alt="" loading="lazy" decoding="async">` : ""}</div>` +
-        `<div class="cap"><div class="idx">${catalogNo.get(p.id)}</div>` +
-          `<div class="nm"></div><div class="pr">${priceLabel(p)}</div>${sw}</div>`;
-      b.querySelector(".nm").textContent = p.name;   // names contain quotes
-      b.addEventListener("click", () => openProduct(p));
-      frag.appendChild(b);
-    }
+    for (const p of list) frag.appendChild(card(p));
     el.grid.appendChild(frag);
     window.scrollTo(0, 0);
+  }
+
+  function card(p) {
+    const b = document.createElement("button");
+    b.className = "item";
+    b.type = "button";
+    const sw = p.colors.length > 1
+      ? `<div class="sw">${p.colors.slice(0, 7).map((c) =>
+          `<i style="background:${c.swatch || "#ddd"}"></i>`).join("")}` +
+        `${p.colors.length > 7 ? `<b>+${p.colors.length - 7}</b>` : ""}</div>`
+      : "";
+    b.innerHTML =
+      `<div class="plate"${p.card && p.card.bg ? ` style="background:${p.card.bg}"` : ""}>` +
+        `${p.card ? `<img src="${p.card.src}" alt="" loading="lazy" decoding="async">` : ""}</div>` +
+      `<div class="cap"><div class="idx">${catalogNo.get(p.id)}</div>` +
+        `<div class="nm"></div><div class="pr">${priceLabel(p)}</div>${sw}</div>`;
+    b.querySelector(".nm").textContent = p.name;   // names contain quotes
+    b.addEventListener("click", () => openProduct(p));
+    return b;
+  }
+
+  const inCollection = (id) => DATA.products.filter((p) => p.collections.includes(id));
+
+  /* --------------------------------------------------------- home view */
+
+  function renderHome() {
+    const feat = inCollection("aoir2026");
+
+    // Three of the 2026 shots, stacked and tilted behind the headline.
+    el.heroArt.innerHTML = "";
+    const wearable = feat.filter((p) => p.sizes.length > 1);
+    for (const p of (wearable.length >= 3 ? wearable : feat).slice(0, 3)) {
+      const im = (p.colors[0].images && p.colors[0].images[0]) || p.card;
+      if (!im) continue;
+      const img = document.createElement("img");
+      img.src = im.src;
+      img.alt = "";
+      img.loading = "eager";
+      el.heroArt.appendChild(img);
+    }
+
+    el.featGrid.innerHTML = "";
+    for (const p of feat) el.featGrid.appendChild(card(p));
+
+    el.collCards.innerHTML = "";
+    for (const c of DATA.collections) {
+      if (c.id === "aoir2026") continue;
+      const items = inCollection(c.id);
+      const hero = items.find((p) => p.card) || items[0];
+      const b = document.createElement("button");
+      b.className = "collcard";
+      b.type = "button";
+      b.innerHTML =
+        `${hero && hero.card ? `<img class="cc-art" src="${hero.card.src}" alt="" loading="lazy">` : ""}` +
+        `<div class="cc-n">${c.count} item${c.count === 1 ? "" : "s"}</div>` +
+        `<div class="cc-t"></div>`;
+      b.querySelector(".cc-t").textContent = c.label;
+      b.addEventListener("click", () => select(c.id));
+      el.collCards.appendChild(b);
+    }
+  }
+
+  function select(id) {
+    filter = id;
+    // The 2026 collection carries the CDMX pink; everything else is indigo.
+    document.body.dataset.accent = id === "aoir2026" ? "pink" : "";
+    buildMenu();
+    render();
   }
 
   function buildMenu() {
@@ -240,12 +305,7 @@
       ct.className = "n";
       ct.textContent = n;
       b.append(nm, ct);
-      b.addEventListener("click", () => {
-        filter = id;
-        document.body.dataset.accent = id === "aoir2026" ? "pink" : "";
-        buildMenu();
-        render();
-      });
+      b.addEventListener("click", () => select(id));
       return b;
     };
     const grp = (t) => {
@@ -255,13 +315,17 @@
       return d;
     };
     el.menu.innerHTML = "";
-    el.menu.append(grp("Collections"), mk("all", "All products", DATA.products.length));
+    el.menu.append(grp("Shop"), mk("home", "Featured", DATA.collections
+      .reduce((n, c) => (c.id === "aoir2026" ? c.count : n), 0)));
+    el.menu.appendChild(grp("Collections"));
     for (const c of DATA.collections) el.menu.appendChild(mk(c.id, c.label, c.count));
     if (DATA.categories.length) {
       el.menu.appendChild(grp("Browse by type"));
       for (const c of DATA.categories) el.menu.appendChild(mk(c.id, c.label, c.count));
     }
-    el.menu.scrollTop = 0;
+    // Everything-at-once is the fallback, so it sits at the bottom.
+    el.menu.appendChild(grp(""));
+    el.menu.appendChild(mk("all", "All products", DATA.products.length));
   }
 
   /* ----------------------------------------------------------- product */
@@ -531,7 +595,7 @@
     el.landing.hidden = false;
     bag = [];
     syncBagChrome();
-    filter = "all";
+    filter = "home";
     el.q.value = "";
     el.searchWrap.classList.remove("has-value");
     el.sort.value = "featured";
@@ -589,12 +653,13 @@
     el.back.addEventListener("click", closeProduct);
     el.home.addEventListener("click", () => {
       closeProduct();
-      filter = "all";
       el.q.value = "";
       el.searchWrap.classList.remove("has-value");
-      document.body.dataset.accent = "";
-      buildMenu(); render();
+      select("home");
     });
+    el.heroCta.addEventListener("click", () => select("aoir2026"));
+    document.querySelectorAll("[data-goto]").forEach((b) =>
+      b.addEventListener("click", () => select(b.dataset.goto)));
 
     el.addBtn.addEventListener("click", () => {
       const v = variantFor(current, curColor, curSize);

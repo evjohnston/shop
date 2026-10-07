@@ -60,14 +60,48 @@
   </aside>
 
   <main>
-    <header class="head">
-      <h1 id="scope">All products</h1>
-      <span class="ledger" id="count"></span>
-    </header>
-    <div class="grid" id="grid"></div>
-    <div class="empty" id="empty" hidden>
-      <h2>No results</h2>
-      <p>Try another collection, or clear the search.</p>
+    <!-- featured home -->
+    <div id="home-view">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="hero-kicker">AoIR2026 · Ciudad de México</p>
+          <h1 class="hero-title">Regenerations</h1>
+          <p class="hero-sub">This year's conference collection — tees, hoodies,
+            patches and stickers, in CDMX pink and orange.</p>
+          <button class="hero-cta" id="heroCta">
+            Shop the collection <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <div class="hero-art" id="heroArt" aria-hidden="true"></div>
+      </section>
+
+      <section class="row">
+        <header class="rowhead">
+          <h2>AoIR2026 Collection</h2>
+          <button class="rowmore" data-goto="aoir2026">
+            View all <span aria-hidden="true">→</span>
+          </button>
+        </header>
+        <div class="grid feat" id="featGrid"></div>
+      </section>
+
+      <section class="row">
+        <header class="rowhead"><h2>More from the shop</h2></header>
+        <div class="collcards" id="collCards"></div>
+      </section>
+    </div>
+
+    <!-- filtered grid -->
+    <div id="grid-view" hidden>
+      <header class="head">
+        <h1 id="scope">All products</h1>
+        <span class="ledger" id="count"></span>
+      </header>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" hidden>
+        <h2>No results</h2>
+        <p>Try another collection, or clear the search.</p>
+      </div>
     </div>
   </main>
 </div>
