@@ -12,7 +12,7 @@
    Either way the kiosk works with no network once it has been loaded. Checkout
    happens on the shopper's own phone, so the QR codes never depend on this. */
 
-const VERSION = "aoir-kiosk-4af02ea067ff";
+const VERSION = "aoir-kiosk-70c1392e9633";
 const SHELL = [
   "./", "index.html", "styles.css", "fonts.css", "app.js", "qrcode.js", "data.json",
   "fonts/archivo-400-700-latin.woff2",
