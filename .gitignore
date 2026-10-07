@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# The raw Fourthwall export is deliberately NOT committed:
+#  - assets/ is 340 MB of product photography
+#  - variants.csv and products.json carry AoIR's wholesale unit costs for every
+#    variant, and this repo is public
+# Regenerate it with:  python3 main.py   (needs FOURTHWALL_USER / FOURTHWALL_PASS)
+# The built site/ in this repo contains prices only, never costs.
+fourthwall_export/

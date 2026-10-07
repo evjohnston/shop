@@ -1,0 +1,389 @@
+/* AoIR kiosk — a dark archival catalog.
+   The product photography is shot on pure #000, so the page is built dark and
+   the garments float on it with no card chrome. Hairline rules, node dots and
+   letterspaced caps follow the a(o).i.r mark; mono metadata gives it the
+   register of a research index rather than a storefront. */
+
+:root {
+  /* warm near-black, pulled from AoIR's own #060501 */
+  --bg:        #0d0c0c;
+  --bg-2:      #141312;
+  --plate:     #000000;
+
+  --ink:       #f4f2ed;
+  --ink-2:     #a5a19a;
+  --ink-3:     #6e6a64;
+
+  --line:      rgba(244,242,237,.13);
+  --line-2:    rgba(244,242,237,.26);
+
+  --teal:      #7EBEC5;   /* AoIR accent */
+  --pink:      #ed3193;   /* AoIR2026 CDMX */
+  --accent:    var(--teal);
+
+  --sans: 'Archivo', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --gut: 30px;
+}
+
+/* the 2026 collection recolours the whole interface */
+body[data-accent="pink"] { --accent: var(--pink); }
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; overscroll-behavior: none; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none; -webkit-user-select: none;
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* a small label style used throughout: mono, caps, wide tracking */
+.mono, .eyebrow, .lbl, .filters button, .ledger, .qr-sku, .idx, .field input, .field select {
+  font-family: var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* =============================================================== header === */
+
+header {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(140%) blur(16px);
+  -webkit-backdrop-filter: saturate(140%) blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; padding: 17px var(--gut) 15px;
+}
+
+/* --- the lockup --- */
+.identity { display: flex; align-items: center; gap: 0; }
+.identity .node {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); flex: 0 0 auto;
+  transition: background .2s;
+}
+.identity .lead { width: 18px; height: 1px; background: var(--line-2); }
+.identity .wordmark {
+  font-weight: 700; font-size: 20px; letter-spacing: -.035em;
+  transform: skewX(-10deg); transform-origin: left center;
+  padding: 0 13px 0 9px; line-height: 1;
+}
+.identity .divider { width: 1px; align-self: stretch; background: var(--line-2); }
+.identity .org {
+  font-family: var(--mono); font-size: 8.5px; line-height: 1.42;
+  letter-spacing: .17em; text-transform: uppercase;
+  color: var(--ink-2); text-align: left; padding-left: 11px;
+}
+
+/* --- search + sort, as underlined fields not pills --- */
+.tools { display: flex; align-items: center; gap: 10px; }
+
+.field { position: relative; border-bottom: 1px solid var(--line-2); }
+.field input, .field select {
+  font-size: 11px; letter-spacing: .16em;
+  background: none; border: 0; color: var(--ink);
+  padding: 8px 2px; -webkit-appearance: none; appearance: none;
+}
+.field input {
+  width: 150px;
+  /* 16px prevents iOS zoom-on-focus; scale a 16px box down instead */
+  font-size: 16px; transform-origin: left center;
+}
+.field input::placeholder { color: var(--ink-3); letter-spacing: .16em; font-size: 11px; }
+.field input::-webkit-search-cancel-button { display: none; }
+.field:focus-within { border-bottom-color: var(--accent); }
+.field input:focus, .field select:focus { outline: none; }
+
+.field .clear {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  color: var(--ink-3); font-size: 12px; padding: 4px 2px; display: none;
+}
+.field.has-value .clear { display: block; }
+
+.field.select { padding-right: 16px; }
+.field.select::after {
+  content: ""; position: absolute; right: 2px; top: 50%;
+  width: 5px; height: 5px; margin-top: -4px;
+  border-right: 1px solid var(--ink-2); border-bottom: 1px solid var(--ink-2);
+  transform: rotate(45deg); pointer-events: none;
+}
+.field select { font-size: 11px; padding-right: 4px; }
+.field select option { background: var(--bg-2); color: var(--ink); }
+
+/* --- filters --- */
+.filters {
+  display: flex; gap: 0; overflow-x: auto; padding: 0 var(--gut);
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  /* fade the right edge so it's obvious the row keeps going */
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 46px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 46px), transparent);
+}
+.filters::-webkit-scrollbar { display: none; }
+
+.filters button {
+  flex: 0 0 auto; position: relative;
+  font-size: 10px; font-weight: 500;
+  color: var(--ink-3); white-space: nowrap;
+  padding: 13px 0 14px; margin-right: 26px;
+  transition: color .15s;
+}
+.filters button::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 2px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left; transition: transform .18s ease;
+}
+.filters button[aria-pressed="true"] { color: var(--ink); }
+.filters button[aria-pressed="true"]::after { transform: scaleX(1); }
+.filters button .n {
+  font-size: 9px; color: var(--ink-3); margin-left: 6px;
+  letter-spacing: .08em; vertical-align: 1px;
+}
+.filters button[aria-pressed="true"] .n { color: var(--accent); }
+.filters .rule { flex: 0 0 auto; width: 1px; background: var(--line); margin: 13px 26px 14px 0; }
+
+/* ================================================================= grid === */
+
+main { padding: 24px var(--gut) 80px; }
+
+.ledger {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 9.5px; color: var(--ink-3); margin-bottom: 20px;
+}
+.ledger .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line-2); }
+
+.grid {
+  display: grid; gap: 30px 22px;
+  grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
+}
+
+.item { text-align: left; display: flex; flex-direction: column; }
+
+.plate {
+  position: relative; aspect-ratio: 4/5; background: var(--plate);
+  border: 1px solid var(--line); overflow: hidden;
+  transition: border-color .15s;
+}
+.plate img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.item:active .plate { border-color: var(--accent); }
+
+/* a crop-mark tick in the plate corner — print-catalogue cue */
+.plate::after {
+  content: ""; position: absolute; left: 0; top: 0;
+  width: 9px; height: 9px;
+  border-left: 1px solid var(--line-2); border-top: 1px solid var(--line-2);
+  opacity: 0; transition: opacity .15s;
+}
+.item:active .plate::after { opacity: 1; }
+
+.cap { padding-top: 11px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.idx { font-size: 9px; color: var(--ink-3); letter-spacing: .18em; }
+.nm {
+  font-size: 13.5px; font-weight: 500; line-height: 1.32;
+  letter-spacing: -.005em; text-transform: none;
+  /* two lines' worth, so prices sit on one baseline across the row */
+  min-height: 2.64em;
+}
+.pr {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums; letter-spacing: .02em; margin-top: 1px;
+}
+.sw { display: flex; gap: 4px; margin-top: auto; padding-top: 9px; }
+.sw i { width: 9px; height: 9px; display: block; border: 1px solid var(--line-2); }
+.sw b {
+  font-family: var(--mono); font-size: 8.5px; color: var(--ink-3);
+  font-style: normal; font-weight: 400; align-self: center; margin-left: 2px;
+}
+
+.empty { text-align: center; color: var(--ink-3); padding: 100px 20px; }
+.empty h2 {
+  font-size: 13px; color: var(--ink); margin: 0 0 8px;
+  font-family: var(--mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.empty p { font-size: 14px; }
+
+/* =============================================================== detail === */
+
+.sheet {
+  position: fixed; inset: 0; z-index: 100; background: var(--bg);
+  display: flex; flex-direction: column;
+  animation: rise .2s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+.sheet[hidden] { display: none; }
+
+.sheet-top {
+  display: flex; align-items: center; gap: 20px;
+  padding: 16px var(--gut); border-bottom: 1px solid var(--line);
+}
+.back {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ink-2); display: flex; gap: 8px;
+}
+.back:active { color: var(--accent); }
+.crumb {
+  font-size: 13px; color: var(--ink-3); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+
+.sheet-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1fr);
+  gap: 40px; padding: 26px var(--gut) 56px; align-items: start;
+}
+
+.plate.lg { aspect-ratio: 4/5; max-height: calc(100vh - 248px); }
+.plate.lg::after { opacity: 1; }
+
+.strip { display: flex; gap: 7px; margin-top: 9px; }
+.strip:empty { display: none; }
+.strip button {
+  width: 52px; aspect-ratio: 4/5; overflow: hidden; background: var(--plate);
+  border: 1px solid var(--line); transition: border-color .15s;
+}
+.strip button[aria-pressed="true"] { border-color: var(--accent); }
+.strip img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* --- spec column --- */
+.eyebrow {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 9px; color: var(--ink-3); margin-bottom: 13px;
+}
+.eyebrow i { width: 3px; height: 3px; border-radius: 50%; background: var(--line-2); }
+
+.spec h1 {
+  font-size: 30px; line-height: 1.12; margin: 0 0 12px;
+  letter-spacing: -.025em; font-weight: 600; max-width: 15ch;
+}
+.spec .price {
+  font-family: var(--mono); font-size: 16px; margin: 0 0 30px;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+
+.opt { margin-bottom: 24px; }
+.lbl { font-size: 9px; color: var(--ink-3); margin-bottom: 11px; }
+.lbl span {
+  color: var(--ink); margin-left: 9px; letter-spacing: .06em;
+  font-size: 10px;
+}
+
+/* squares, not pills — the grid is the point */
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatches button {
+  width: 34px; height: 34px; border: 1px solid var(--line-2); position: relative;
+}
+.swatches button[aria-pressed="true"]::after {
+  content: ""; position: absolute; inset: -5px; border: 1px solid var(--accent);
+}
+.swatches button.named {
+  width: auto; height: auto; padding: 9px 14px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-2);
+}
+.swatches button.named[aria-pressed="true"] {
+  color: var(--bg); background: var(--accent); border-color: var(--accent);
+}
+.swatches button.named[aria-pressed="true"]::after { display: none; }
+
+.sizes { display: flex; flex-wrap: wrap; gap: 7px; }
+.sizes button {
+  min-width: 46px; padding: 11px 12px; border: 1px solid var(--line-2);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  color: var(--ink-2); text-transform: uppercase;
+}
+.sizes button[aria-pressed="true"] {
+  background: var(--accent); border-color: var(--accent); color: var(--bg);
+}
+.sizes button:disabled { opacity: .22; }
+
+/* --- the QR, presented as a specimen plate --- */
+.qr {
+  margin-top: 32px; padding-top: 26px; border-top: 1px solid var(--line);
+  display: flex; gap: 24px; align-items: flex-start;
+}
+.qr-plate {
+  position: relative; background: #fff; padding: 15px; flex: 0 0 auto;
+}
+/* crop marks, so the white square reads as a mounted plate */
+.qr-plate::before, .qr-plate::after {
+  content: ""; position: absolute; width: 11px; height: 11px; pointer-events: none;
+}
+.qr-plate::before {
+  left: -5px; top: -5px;
+  border-left: 1px solid var(--line-2); border-top: 1px solid var(--line-2);
+}
+.qr-plate::after {
+  right: -5px; bottom: -5px;
+  border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2);
+}
+.qr canvas { width: 204px; height: 204px; display: block; image-rendering: pixelated; }
+
+.qr-side { padding-top: 2px; min-width: 0; }
+.qr-hd {
+  font-size: 19px; font-weight: 600; line-height: 1.15;
+  letter-spacing: -.02em; margin-bottom: 9px;
+}
+.qr-sb { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin: 0 0 16px; max-width: 26ch; }
+.qr-vt {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em;
+  color: var(--accent); text-transform: uppercase; line-height: 1.5;
+}
+.qr-sku {
+  font-size: 8.5px; color: var(--ink-3); margin-top: 7px;
+  letter-spacing: .14em;
+}
+
+.details {
+  list-style: none; margin: 30px 0 0; padding: 22px 0 0;
+  border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 9px 26px;
+}
+.details li {
+  position: relative; padding-left: 15px;
+  font-size: 12.5px; color: var(--ink-2); line-height: 1.45;
+}
+.details li::before {
+  content: ""; position: absolute; left: 0; top: .58em;
+  width: 4px; height: 4px; border: 1px solid var(--line-2); border-radius: 50%;
+}
+
+/* ============================================================== portrait === */
+
+@media (max-width: 920px) {
+  .sheet-body { grid-template-columns: 1fr; gap: 24px; padding: 20px var(--gut) 48px; }
+  /* Photo and text share one measure, so the column reads as a single page
+     rather than two things that happen to be stacked. */
+  .gal, .spec { max-width: 520px; margin-inline: auto; width: 100%; }
+  .plate.lg { max-height: 44vh; }
+  .spec h1 { font-size: 26px; max-width: none; }
+}
+
+@media (max-width: 680px) {
+  :root { --gut: 18px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 22px 14px; }
+  .bar { flex-wrap: wrap; gap: 14px; }
+  .tools { width: 100%; justify-content: space-between; }
+  .field input { width: 100%; }
+  .field { flex: 1; }
+  .field.select { flex: 0 0 auto; }
+  .qr { flex-direction: column; gap: 18px; }
+  .details { grid-template-columns: 1fr; }
+  .spec h1 { font-size: 23px; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
