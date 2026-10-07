@@ -70,7 +70,7 @@ touch returns it to that screen and empties the bag, with a "still shopping?"
 prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
 `site_src/app.js`.
 
-- 61 products, 440 variants, ~26 MB total
+- 61 products, 440 variants, ~23 MB total
 - Per-product fabric and fit specs, pulled from `products.csv`
 - QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
   arbitrary combination of variants, so its code cannot be precomputed. The code
@@ -80,9 +80,11 @@ prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
   "All products" sits at the bottom of the rail as the fallback
 - Categories, cross-cutting collections, search, and five sort orders
 - Tap a product photo for a full-screen viewer: pinch, double-tap or the
-  +/− buttons to zoom to 400%, drag to pan. Gallery images are 1400px so the
-  zoom stays sharp; the kiosk disables page zoom, so this is its own viewer
-  rather than native pinch
+  +/− buttons to zoom to 400%, drag to pan. The kiosk disables page zoom, so
+  this is its own viewer rather than native pinch
+- An AoIR2026 free-shipping promo: shown on the landing screen, in the hero and
+  on each product, with a progress bar in the bag. `FREE_SHIP` at the top of
+  `site_src/app.js` — set `THRESHOLD` to null to remove it
 - **Works offline.** A service worker caches the shell, catalog, photos, and
   fonts, so a wifi drop mid-conference doesn't blank the screen. (Checkout
   happens on the shopper's phone, so it needs their connection, not yours.)
@@ -210,3 +212,26 @@ That leaves **61 products / 440 variants** on the kiosk and **470 printable
 cards**. Set `PUBLIC_ONLY = False` in `main.py` to print the hidden ones for
 staff; flip a product back to public or available in Fourthwall and it returns
 on the next `main.py` + `build_site.py` run.
+
+
+## Image sizes are set by iOS memory, not file size
+
+Three widths in `build_site.py`, and they are not arbitrary:
+
+| | width | decoded | shown at |
+|---|---|---|---|
+| `CARD_W` | 440 | 1.0 MB | ~215px |
+| `THUMB_W` | 200 | 0.2 MB | ~54px |
+| `DETAIL_W` | 1200 | 7.7 MB | main photo + zoom |
+
+A browser decodes the file you give it, not the size you display it at, and
+iOS Safari budgets *decoded* pixels per page — paint past it and you get the
+broken-image placeholder, the small blue question mark. Desktop has no such
+cap, so this only ever shows up on the iPad.
+
+Pointing the 54px gallery strip at the full-size file put one product page at
+**~42 MB decoded** and broke exactly that way. With a dedicated thumbnail it is
+**~8.5 MB**. If you raise `DETAIL_W` for sharper zoom, check this budget first.
+
+As a backstop, an image that fails to load is hidden and leaves its empty
+plate, so the placeholder glyph can never appear again.

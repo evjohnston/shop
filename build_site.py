@@ -108,7 +108,15 @@ COLLECTIONS = [
 SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL",
               "11oz", "15oz", "One size"]
 
-CARD_W, DETAIL_W = 560, 1400   # DETAIL_W doubles as the zoom resolution
+# Sizes are set by decoded memory, not file size: iOS Safari budgets decoded
+# pixels per page and paints the broken-image placeholder once that is gone.
+# A card shows at ~215px and a strip thumb at ~54px, so these are generous.
+CARD_W, DETAIL_W = 440, 1200   # DETAIL_W doubles as the zoom resolution
+# The gallery strip renders at ~54px but a browser decodes whatever file you
+# give it. Pointing those at DETAIL_W made one product page decode ~42 MB,
+# which blows iOS Safari's per-page image budget and paints the broken-image
+# placeholder — on the iPad only, since desktop has no such cap.
+THUMB_W = 200
 MAX_IMAGES_PER_COLOR = 4
 
 
@@ -307,10 +315,15 @@ def main():
                 order.append(cname)
                 gallery, seen = [], set()
                 for im in (v.get("images") or [])[:MAX_IMAGES_PER_COLOR]:
-                    r = imgs.get(local(im), DETAIL_W)
+                    f = local(im)
+                    r = imgs.get(f, DETAIL_W)
                     if r and r["src"] not in seen:
                         seen.add(r["src"])
-                        gallery.append(r)
+                        small = imgs.get(f, THUMB_W)
+                        entry = dict(r)
+                        if small:
+                            entry["thumb"] = small["src"]
+                        gallery.append(entry)
                 colors[cname] = {
                     "name": cname,
                     "swatch": (attrs.get("color") or {}).get("swatch") or "",

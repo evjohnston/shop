@@ -22,6 +22,7 @@
     <h1>Conference Shop</h1>
     <p class="landing-sub">Browse the collection, pick your size and color, then scan the code with your phone to check out. Nothing to type here.</p>
     <button class="start" id="start">Start shopping</button>
+    <p class="landing-ship" id="landingShip"></p>
     <p class="landing-foot">AoIR2026 · Regenerations · Ciudad de México</p>
   </div>
 </section>
@@ -71,6 +72,7 @@
           <button class="hero-cta" id="heroCta">
             Shop the collection <span aria-hidden="true">→</span>
           </button>
+          <p class="hero-ship" id="heroShip"></p>
         </div>
         <div class="hero-art" id="heroArt" aria-hidden="true"></div>
       </section>
@@ -148,6 +150,7 @@
           <div class="qr-vt" id="qrVariant"></div>
           <div class="qr-sku" id="pSku"></div>
           <button class="addbtn" id="addBtn">Add to bag instead</button>
+          <p class="shipnote" id="shipNote"></p>
           <p class="addnote">Buying more than one thing? Add them to a bag and scan a single code at the end.</p>
         </div>
       </div>
@@ -169,6 +172,10 @@
     <div class="bag-side">
       <div class="qr-plate"><canvas id="bagQr" aria-label="Checkout QR code for your bag"></canvas></div>
       <div class="bag-total"><span>Total</span><b id="bagTotal">$0.00</b></div>
+      <div class="ship" id="ship" hidden>
+        <div class="ship-track"><i id="shipBar"></i></div>
+        <p class="ship-msg" id="shipMsg"></p>
+      </div>
       <div class="qr-hd">Scan to check out</div>
       <p class="qr-sb">One code for everything in your bag. Point your phone camera at it and check out there.</p>
       <p class="qr-sb dim" id="bagCount"></p>

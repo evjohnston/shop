@@ -10,6 +10,16 @@
 (() => {
   "use strict";
 
+  // AoIR2026 promotion. This only advertises the offer — the discount itself
+  // has to be configured in Fourthwall's shipping settings, or the shopper
+  // will be charged at checkout and we'll have lied to them.
+  // Set THRESHOLD to null to take the whole thing down.
+  const FREE_SHIP = {
+    THRESHOLD: 75,
+    SHORT: "Free worldwide shipping over $75",
+    LONG:  "Free shipping on orders over $75 — anywhere in the world.",
+  };
+
   const IDLE_MS  = 90 * 1000;   // total quiet time before the kiosk resets
   const WARN_MS  = 15 * 1000;   // how much of that is the "still there?" prompt
   const MAX_LINES = 15;         // keeps the bag's QR sparse enough to scan
@@ -25,6 +35,8 @@
     sort: $("sort"), home: $("home"),
     sheet: $("sheet"), back: $("back"), sheetTitle: $("sheetTitle"), sheetBody: $("sheetBody"),
     galMain: $("galMain"), galStrip: $("galStrip"), galZoom: $("galZoom"),
+    heroShip: $("heroShip"), landingShip: $("landingShip"), shipNote: $("shipNote"),
+    ship: $("ship"), shipBar: $("shipBar"), shipMsg: $("shipMsg"),
     lightbox: $("lightbox"), lbStage: $("lbStage"), lbImg: $("lbImg"),
     lbClose: $("lbClose"), lbIn: $("lbIn"), lbOut: $("lbOut"),
     lbPct: $("lbPct"), lbTip: $("lbTip"),
@@ -46,6 +58,17 @@
   const label = new Map();
   const catalogNo = new Map();
   const byId = new Map();             // variant id -> {product, variant}
+
+  // If a photo ever fails to decode, show the empty plate rather than the
+  // browser's broken-image glyph. Delegated so it covers images added later.
+  document.addEventListener("error", (e) => {
+    const img = e.target;
+    if (img && img.tagName === "IMG") img.style.visibility = "hidden";
+  }, true);
+  document.addEventListener("load", (e) => {
+    const img = e.target;
+    if (img && img.tagName === "IMG") img.style.visibility = "";
+  }, true);
 
   const money = (n) =>
     "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -165,9 +188,29 @@
     }
 
     const n = bagCount();
-    el.bagTotal.textContent = money(bagTotal());
+    const total = bagTotal();
+    el.bagTotal.textContent = money(total);
     el.bagCount.textContent = `${n} item${n === 1 ? "" : "s"} · ${bag.length} line${bag.length === 1 ? "" : "s"}`;
+    renderShipping(total);
     drawQR(el.bagQr, bagURL());
+  }
+
+  function renderShipping(total) {
+    const t = FREE_SHIP.THRESHOLD;
+    if (!t) { el.ship.hidden = true; return; }
+    el.ship.hidden = false;
+    const done = total >= t;
+    el.ship.classList.toggle("done", done);
+    el.shipBar.style.width = Math.min(100, (total / t) * 100) + "%";
+    if (done) {
+      el.shipMsg.textContent = "Free shipping unlocked — anywhere in the world.";
+    } else {
+      el.shipMsg.innerHTML = "";
+      el.shipMsg.append(
+        document.createTextNode("Add "),
+        Object.assign(document.createElement("b"), { textContent: money(t - total) }),
+        document.createTextNode(" for free worldwide shipping."));
+    }
   }
 
   const openBag = () => { renderBag(); el.bag.hidden = false; };
@@ -420,7 +463,9 @@
       b.type = "button";
       if (im.bg) b.style.background = im.bg;
       b.setAttribute("aria-pressed", String(i === 0));
-      b.innerHTML = `<img src="${im.src}" alt="" loading="lazy" decoding="async">`;
+      // Strip uses the small file: the browser decodes what you give it, not
+      // what you display, and full-size here is what broke iPad rendering.
+      b.innerHTML = `<img src="${im.thumb || im.src}" alt="" loading="lazy" decoding="async">`;
       b.addEventListener("click", () => {
         show(im);
         [...el.galStrip.children].forEach((x, j) => x.setAttribute("aria-pressed", String(i === j)));
@@ -709,6 +754,14 @@
         catalogNo.set(p.id, String(i + 1).padStart(3, "0"));
         for (const v of p.variants) byId.set(v.id, { p, v });
       });
+      if (FREE_SHIP.THRESHOLD) {
+        el.heroShip.textContent = FREE_SHIP.SHORT;
+        el.shipNote.textContent = FREE_SHIP.LONG;
+        el.landingShip.innerHTML = "";
+        el.landingShip.append(
+          Object.assign(document.createElement("b"), { textContent: "Free shipping" }),
+          document.createTextNode(` on orders over $${FREE_SHIP.THRESHOLD}, worldwide`));
+      }
       buildMenu();
       render();
       wire();

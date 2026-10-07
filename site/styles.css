@@ -649,3 +649,43 @@ main { padding-top: 0; }
   .row { margin-bottom: 38px; }
   .grid.feat { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
+
+
+/* ========================================================== shipping === */
+
+.hero-ship {
+  margin: 20px 0 0; font-family: var(--mono); font-size: 10px;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--pink);
+  display: flex; align-items: center; gap: 9px;
+}
+.hero-ship::before {
+  content: ""; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--pink); flex: 0 0 auto;
+}
+
+.landing-ship {
+  margin: 30px 0 0; display: inline-flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--ink-2);
+  background: var(--plate); border-radius: 999px; padding: 10px 20px;
+}
+.landing-ship b { color: var(--ink); font-weight: 600; }
+
+.shipnote {
+  margin: 12px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--ink-3);
+  max-width: 30ch;
+}
+
+/* bag: how far off the threshold you are */
+.ship { margin: -4px 0 18px; }
+.ship-track {
+  height: 3px; background: var(--line); border-radius: 999px;
+  overflow: hidden; margin-bottom: 10px;
+}
+.ship-track i {
+  display: block; height: 100%; width: 0; background: var(--accent);
+  border-radius: 999px; transition: width .3s cubic-bezier(.2,.8,.3,1);
+}
+.ship.done .ship-track i { background: #1f8a5b; }
+.ship-msg { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+.ship-msg b { color: var(--ink); font-weight: 600; }
+.ship.done .ship-msg { color: #1f8a5b; font-weight: 500; }
