@@ -65,7 +65,7 @@ CATEGORIES = [
 # to write fourthwall_export/categories.json and this is replaced by the real
 # mapping from the API.
 COLLECTIONS = [
-    ("aoir2026", "AoIR2026 Collections", [
+    ("aoir2026", "AoIR2026 Collection", [
         "AoIR CDMX Logo Sticker - Pink",
         "AoIR CDMX Logo - Orange",
         "AoIR2026 Regenerations Unisex Conference Tee 'se habla español' - Orange",
