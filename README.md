@@ -70,7 +70,7 @@ touch returns it to that screen and empties the bag, with a "still shopping?"
 prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
 `site_src/app.js`.
 
-- 65 products, 466 variants, ~20 MB total
+- 61 products, 440 variants, ~19 MB total
 - Per-product fabric and fit specs, pulled from `products.csv`
 - QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
   arbitrary combination of variants, so its code cannot be precomputed. The code
@@ -169,26 +169,37 @@ That is what the bag is built on. The kiosk caps the bag at 15 distinct lines,
 because the URL grows ~38 characters per line and a denser QR gets harder to
 scan.
 
-## Sold-out products are excluded everywhere
+## What reaches the booth, and what doesn't
 
-Fourthwall **enforces** `state: SOLD_OUT` at checkout. `/cart/checkout` refuses
-to create a session and bounces to `?error_message=Checkout unknown error`.
-Tested one variant from each: 5/5 sold-out products fail, 3/3 available ones
-succeed. And **one sold-out item breaks an entire bag** — the whole cart fails,
-not just that line.
+Fourthwall's own `access.type` sorts the catalogue, so nothing here is keyed to
+a product name:
 
-These products are discontinued, so they are dropped from both the links and
-the shop:
+| `access.type` | | Booth |
+|---|---|---|
+| `PUBLIC` | 62 | listed and buyable |
+| `HIDDEN` | 4 | staff/committee merch — excluded |
+| `ARCHIVED` | 5 | discontinued — excluded |
 
-- `main.py` `is_unbuyable()` skips them in `checkout_links.csv`, so no printable
-  QR card is ever made for one
-- `build_site.py` leaves them out of the catalogue entirely
+**`HIDDEN`** is how Fourthwall marks merch that is deliberately unlisted but
+still buyable by direct link: the Executive Committee crewneck and the
+Volunteers / Executive Staff / Executive Committee conference tees. Those links
+work, which is exactly why they must not appear on a kiosk or on a printed card
+at a public table.
 
-That currently removes 5 products / 23 variants: `'Online Trust' Unisex Tee`,
-`AoIR 'I Survived' Unisex Tee`, `AoIR2025 Conference Tote`, and the two
-`Copy of …` duplicates. The shop is 65 products / 466 variants, and there are
-496 printable cards.
+**`ARCHIVED`** happens to be the same five products Fourthwall marks
+`SOLD_OUT`, and those cannot be bought at all: `/cart/checkout` refuses to
+create a session and bounces to `?error_message=Checkout unknown error`. Tested
+one variant from each — 5/5 sold-out fail, 3/3 available succeed. Worse, **one
+of them in a bag breaks the whole cart**, not just its own line.
 
-Nothing is hardcoded — this keys off the live Fourthwall state. Set a product
-available again in the admin and it returns on the next `main.py` +
-`build_site.py` run.
+Both are excluded at the source, so a dead or private link is never minted in
+the first place:
+
+- `main.py` `is_unbuyable()` skips them in `checkout_links.csv`, so `qr_codes.py`
+  cannot print a card for one
+- `build_site.py` leaves them out of the catalogue
+
+That leaves **61 products / 440 variants** on the kiosk and **470 printable
+cards**. Set `PUBLIC_ONLY = False` in `main.py` to print the hidden ones for
+staff; flip a product back to public or available in Fourthwall and it returns
+on the next `main.py` + `build_site.py` run.

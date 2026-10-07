@@ -282,6 +282,13 @@ def main():
         if (p.get("state") or {}).get("type") == "SOLD_OUT":
             skipped.append(f"{name} (sold out — no checkout possible)")
             continue
+        # HIDDEN is Fourthwall's own marker for staff/committee merch: it is
+        # buyable by direct link but deliberately not listed in the shop, so it
+        # has no business on a kiosk anyone can walk up to.
+        access = ((p.get("access") or {}).get("type") or "PUBLIC").upper()
+        if access != "PUBLIC":
+            skipped.append(f"{name} ({access.lower()} in Fourthwall)")
+            continue
 
         # Group variants by colour: Fourthwall gives every variant of a colour
         # the same photo set, so the gallery is per colour, not per size.

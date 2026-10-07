@@ -267,13 +267,31 @@ def is_archived(p):
     return "ARCHIV" in json.dumps([p.get("state"), p.get("status")]).upper()
 
 
+def is_public(p):
+    """Only Fourthwall's PUBLIC products belong at a public booth.
+
+    access.type sorts the catalogue cleanly:
+      PUBLIC   - the actual shop
+      HIDDEN   - staff/committee merch, reachable by direct link but not listed
+      ARCHIVED - discontinued
+    """
+    return ((p.get("access") or {}).get("type") or "PUBLIC").upper() == "PUBLIC"
+
+
 def is_unbuyable(p):
-    """Fourthwall refuses checkout for SOLD_OUT products: /cart/checkout will
-    not create a session and bounces to ?error_message=Checkout unknown error.
-    A link for one is dead on arrival, and one in a multi-item cart kills the
-    whole cart, so don't mint links or print QR cards for them."""
+    """No link and no printed QR card for these.
+
+    SOLD_OUT: Fourthwall refuses checkout outright - /cart/checkout will not
+    create a session and bounces to ?error_message=Checkout unknown error, and
+    one in a multi-item cart kills the whole cart.
+    HIDDEN: the link works, but it is staff merch that should not be sitting on
+    a card at a public table. Drop PUBLIC_ONLY below to print those too.
+    """
+    PUBLIC_ONLY = True
     state = ((p.get("state") or {}).get("type") or "").upper()
-    return is_archived(p) or state == "SOLD_OUT"
+    if is_archived(p) or state == "SOLD_OUT":
+        return True
+    return PUBLIC_ONLY and not is_public(p)
 
 
 def is_digital(p):
@@ -453,7 +471,7 @@ def write_links_csv(products, out, shop_url):
         w.writerow(["Product", "Variant", "Checkout Link"])
         skipped = 0
         for p in products:
-            if is_unbuyable(p):   # no checkout session is possible, so no link
+            if is_unbuyable(p):   # discontinued, or not for public sale
                 skipped += 1
                 continue
             name = (p.get("name") or p.get("slug") or "").strip()
@@ -464,7 +482,7 @@ def write_links_csv(products, out, shop_url):
                 w.writerow([name, variant_label(v), f"{base}/cart/checkout?products={vid}:1"])
                 count += 1
     print(f"Wrote checkout_links.csv: {count} links"
-          + (f" ({skipped} products skipped: archived or sold out)" if skipped else ""))
+          + (f" ({skipped} products skipped: sold out, archived or hidden)" if skipped else ""))
 
 
 # ------------------------------------------------------------------ images
