@@ -557,9 +557,9 @@ main { padding-top: 0; }
 .hero {
   position: relative; overflow: hidden; border-radius: 3px;
   background: linear-gradient(105deg, #fdeef5 0%, #fdf1e8 62%, #fdf6ef 100%);
-  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.9fr);
-  gap: 24px; align-items: center;
-  padding: 46px 0 46px 46px; margin-bottom: 52px;
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.12fr);
+  gap: 20px; align-items: center;
+  padding: 46px 30px 46px 46px; margin-bottom: 44px;
 }
 .hero-kicker {
   font-family: var(--mono); font-size: 9.5px; letter-spacing: .2em;
@@ -571,7 +571,7 @@ main { padding-top: 0; }
 }
 .hero-sub {
   font-size: 16px; line-height: 1.55; color: var(--ink-2);
-  margin: 0 0 28px; max-width: 34ch;
+  margin: 0 0 24px; max-width: 34ch;
 }
 .hero-cta {
   display: inline-flex; align-items: center; gap: 10px;
@@ -580,20 +580,29 @@ main { padding-top: 0; }
 }
 .hero-cta:active { opacity: .85; }
 
-/* three shots, overlapped and tilted, bleeding off the right edge */
-.hero-art { position: relative; height: 310px; }
-.hero-art img {
-  position: absolute; top: 50%; border-radius: 2px;
-  width: 196px; height: 245px; object-fit: contain;
-  background: rgba(255,255,255,.62);
-  box-shadow: 0 12px 34px rgba(90,30,60,.13);
+/* Three garments overlapping, centre one forward. No cards behind them: the
+   shots are cut-outs, so a drop-shadow traces the actual garment instead of a
+   white rectangle, which is what made this look pasted-on. */
+.hero-art {
+  position: relative; height: 330px;
+  display: flex; align-items: center; justify-content: center;
 }
-.hero-art img:nth-child(1) { left:   2%; transform: translateY(-50%) rotate(-7deg); z-index: 1; }
-.hero-art img:nth-child(2) { left:  31%; transform: translateY(-54%) rotate(1.5deg); z-index: 3; }
-.hero-art img:nth-child(3) { left:  60%; transform: translateY(-46%) rotate(8deg); z-index: 2; }
+.hero-art img {
+  position: absolute; top: 50%; object-fit: contain;
+  filter: drop-shadow(0 14px 22px rgba(120, 40, 80, .16));
+}
+/* sized so each tee stays mostly visible either side of the hoodie */
+.hero-art .side { width: 162px; height: 203px; z-index: 1; opacity: .97; }
+.hero-art .left   { left: 0;  transform: translateY(-46%); }
+.hero-art .right  { right: 0; transform: translateY(-46%); }
+.hero-art .center {
+  width: 208px; height: 260px; z-index: 2;
+  left: 50%; transform: translate(-50%, -52%);
+  filter: drop-shadow(0 18px 30px rgba(120, 40, 80, .2));
+}
 
 /* --- rows --- */
-.row { margin-bottom: 52px; }
+.row { margin-bottom: 48px; }
 .rowhead {
   display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
   padding-bottom: 14px; margin-bottom: 22px; border-bottom: 1px solid var(--line);
@@ -633,19 +642,18 @@ main { padding-top: 0; }
   max-width: 11ch; position: relative; z-index: 1;
 }
 
-@media (max-width: 1100px) {
-  .hero { grid-template-columns: 1fr; padding: 36px 28px; gap: 30px; }
-  .hero-art { height: 230px; }
-  .hero-art img { width: 152px; height: 190px; }
-  .hero-art img:nth-child(1) { left: 4%; }
-  .hero-art img:nth-child(2) { left: 32%; }
-  .hero-art img:nth-child(3) { left: 60%; }
-  .hero-sub { max-width: none; }
+@media (max-width: 1340px) {
+  .hero { grid-template-columns: 1fr; padding: 32px 32px 26px; gap: 18px; }
+  .hero-art { height: 236px; }
+  .hero-art .side { width: 158px; height: 198px; }
+  .hero-art .center { width: 202px; height: 252px; }
+  .hero-sub { max-width: 52ch; }
 }
 @media (max-width: 640px) {
   .hero { padding: 26px 20px; margin-bottom: 38px; }
-  .hero-art { height: 180px; }
-  .hero-art img { width: 118px; height: 148px; }
+  .hero-art { height: 196px; }
+  .hero-art .side { width: 112px; height: 140px; }
+  .hero-art .center { width: 148px; height: 185px; }
   .row { margin-bottom: 38px; }
   .grid.feat { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
@@ -654,7 +662,7 @@ main { padding-top: 0; }
 /* ========================================================== shipping === */
 
 .hero-ship {
-  margin: 20px 0 0; font-family: var(--mono); font-size: 10px;
+  margin: 16px 0 0; font-family: var(--mono); font-size: 10px;
   letter-spacing: .13em; text-transform: uppercase; color: var(--pink);
   display: flex; align-items: center; gap: 9px;
 }
@@ -664,7 +672,9 @@ main { padding-top: 0; }
 }
 
 .landing-ship {
-  margin: 30px 0 0; display: inline-flex; align-items: center; gap: 10px;
+  /* its own line under the button, not flowing beside it */
+  margin: 26px auto 0; width: fit-content;
+  display: flex; align-items: center; gap: 8px;
   font-size: 14px; color: var(--ink-2);
   background: var(--plate); border-radius: 999px; padding: 10px 20px;
 }

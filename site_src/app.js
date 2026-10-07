@@ -295,14 +295,22 @@
   function renderHome() {
     const feat = inCollection("aoir2026");
 
-    // Three of the 2026 shots, stacked and tilted behind the headline.
+    // Pink tee left, pink hoodie forward in the centre, orange tee right.
+    const HERO = [
+      ["left",   "class", "AoIR2026 Regenerations Unisex Conference Tee - Pink"],
+      ["center", "class", "AoIR2026 Regenerations Unisex Conference Hoodie - Pink"],
+      ["right",  "class", "AoIR2026 Regenerations Unisex Conference Tee - Orange"],
+    ];
     el.heroArt.innerHTML = "";
-    const wearable = feat.filter((p) => p.sizes.length > 1);
-    for (const p of (wearable.length >= 3 ? wearable : feat).slice(0, 3)) {
+    const spare = feat.filter((p) => p.sizes.length > 1);
+    for (const [slot, , wanted] of HERO) {
+      const p = feat.find((x) => x.name === wanted) || spare.shift();
+      if (!p) continue;
       const im = (p.colors[0].images && p.colors[0].images[0]) || p.card;
       if (!im) continue;
       const img = document.createElement("img");
-      img.src = im.src;
+      img.className = slot === "center" ? "center" : `side ${slot}`;
+      img.src = im.thumb && slot !== "center" ? im.src : im.src;
       img.alt = "";
       img.loading = "eager";
       el.heroArt.appendChild(img);
