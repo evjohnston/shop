@@ -9,12 +9,11 @@ and no network once loaded:
   site/index.html      copied from site_src/
   site/app.js          copied from site_src/
   site/styles.css      copied from site_src/
-  site/data.json       catalog + a QR module matrix per variant
+  site/data.json       catalog: products, variants, checkout links
   site/img/*.webp      resized photos
 
-Every variant carries its checkout QR as a base64 module matrix (~230 bytes)
-that the browser draws on a canvas, so there is no QR library to load and the
-codes are identical to the printed ones in qr_codes/.
+QR codes are generated in the browser (site_src/qrcode.js, MIT), because a
+cart is an arbitrary combination of variants and cannot be precomputed.
 
 Usage:
   pip install "qrcode[pil]" pillow
@@ -23,7 +22,6 @@ Usage:
 """
 
 import argparse
-import base64
 import csv
 import hashlib
 import html
@@ -33,8 +31,6 @@ import shutil
 import sys
 from pathlib import Path
 
-import qrcode
-from qrcode.constants import ERROR_CORRECT_M
 from PIL import Image
 
 # ---------------------------------------------------------------- catalog fixes
@@ -42,6 +38,12 @@ from PIL import Image
 # different SKUs and photos. The "-2" slug was created 19s earlier, so the plain
 # slug is the newer one and the one we show.
 HIDE_SLUGS = {"aoirchive-hooded-sweatshirt-w-full-design-2"}
+# Fourthwall ENFORCES state=SOLD_OUT at checkout: /cart/checkout refuses to
+# create a session and bounces to ?error_message=Checkout unknown error. Tested
+# 5/5 sold-out products fail, 3/3 available ones succeed. So these cannot be
+# sold however the stock really looks, and one of them in a bag kills the whole
+# cart. The kiosk shows them but won't offer a code. Fix the state in
+# Fourthwall and rebuild to put them back on sale.
 # "Copy of X" products are accidental Fourthwall duplicates of a product we
 # already list. Drop them so the same shirt doesn't appear twice.
 HIDE_NAME_PREFIXES = ("copy of",)
@@ -63,7 +65,7 @@ CATEGORIES = [
 # to write fourthwall_export/categories.json and this is replaced by the real
 # mapping from the API.
 COLLECTIONS = [
-    ("aoir2026", "AoIR2026", [
+    ("aoir2026", "AoIR2026 Collections", [
         "AoIR CDMX Logo Sticker - Pink",
         "AoIR CDMX Logo - Orange",
         "AoIR2026 Regenerations Unisex Conference Tee 'se habla español' - Orange",
@@ -74,8 +76,8 @@ COLLECTIONS = [
         "AoIR2026 Regenerations Unisex Conference Hoodie - Orange",
         "AoIR2026 Conference Patch - CDMX",
     ]),
-    ("aoirchive", "AoIRchive", "^aoirchive"),          # a prefix rule, not a list
-    ("seriousness", "'In All Seriousness'", [
+    ("aoirchive", "AoIRchive Collection", "^aoirchive"),          # a prefix rule, not a list
+    ("seriousness", "'In All Seriousness' Collection", [
         "'Tech Support' Unisex Tee",
         "'I Survived the Listserv' Unisex Tee",
         "'Online Safety' Unisex Tee",
@@ -86,7 +88,7 @@ COLLECTIONS = [
         "'AoIR Karaoke' Unisex Tee",
         "'14.4 Baud' Unisex Tee",
     ]),
-    ("influencer", "Influencer", [
+    ("influencer", "Influencers Collection", [
         "'Influencer?' Tenure Version - Unisex Tee",
         "'I coded 2000 tiktoks...' - Unisex Tee",
         "'Context collapse...' - Unisex Tee",
@@ -141,19 +143,6 @@ def size_key(s):
         return (0, SIZE_ORDER.index(s))
     except ValueError:
         return (1, s)
-
-
-def qr_payload(url):
-    """Base64 module matrix. The browser redraws this; no QR library needed."""
-    qr = qrcode.QRCode(error_correction=ERROR_CORRECT_M, border=0, box_size=1)
-    qr.add_data(url)
-    qr.make(fit=True)
-    n = qr.modules_count
-    m = qr.get_matrix()
-    bits = "".join("1" if m[r][c] else "0" for r in range(n) for c in range(n))
-    bits += "0" * (-len(bits) % 8)
-    packed = bytes(int(bits[i:i + 8], 2) for i in range(0, len(bits), 8))
-    return n, base64.b64encode(packed).decode()
 
 
 class Images:
@@ -318,16 +307,16 @@ def main():
                     "images": gallery,
                     "thumb": imgs.get(local(v.get("thumbnailImage")), CARD_W),
                 }
-            n, matrix = qr_payload(url)
             variants.append({
                 "color": cname,
                 "size": sname,
                 "price": round(float(v["unitPrice"]["value"]), 2),
                 "sku": v.get("sku") or "",
+                "id": vid,
                 "url": url,
-                "n": n,
-                "qr": matrix,
             })
+
+        sold_out = (p.get("state") or {}).get("type") == "SOLD_OUT"
 
         if not variants:
             skipped.append(f"{name} (no checkout links)")
@@ -353,6 +342,7 @@ def main():
             "priceMax": max(prices),
             "card": card,
             "created": p.get("createdAt", ""),
+            "soldOut": sold_out,
             "details": details_by_id.get(p["id"], []),
             "colors": [colors[c] for c in order],
             "sizes": sorted({v["size"] for v in variants}, key=size_key),
@@ -371,6 +361,9 @@ def main():
         "shop": {
             "name": shop.get("name") or "Shop",
             "url": "https://" + (shop.get("publicDomain") or "shop.aoir.org"),
+            # Verified: ?products=id:qty,id:qty builds a real multi-item cart.
+            "checkout": "https://" + (shop.get("publicDomain") or "shop.aoir.org")
+                        + "/cart/checkout?products=",
         },
         "categories": [{"id": c, "label": l, "count": counts.get(c, 0)}
                        for c, l, _ in CATEGORIES if counts.get(c)],
@@ -399,11 +392,17 @@ def main():
     sw = out / "sw.js"
     if sw.exists():
         h = hashlib.sha1()
-        for n in ("index.html", "app.js", "styles.css", "fonts.css", "data.json"):
+        for n in ("index.html", "app.js", "qrcode.js", "styles.css", "fonts.css", "data.json"):
             f = out / n
             if f.exists():
                 h.update(f.read_bytes())
         sw.write_text(sw.read_text().replace("__BUILD__", h.hexdigest()[:12]))
+
+    blocked = [p["name"] for p in kept if p["soldOut"]]
+    if blocked:
+        print(f"no checkout (Fourthwall state SOLD_OUT): {len(blocked)}")
+        for b in blocked:
+            print(f"           - {b}")
 
     nvar = sum(len(p["variants"]) for p in kept)
     size_mb = sum(f.stat().st_size for f in out.rglob("*") if f.is_file()) / 1e6

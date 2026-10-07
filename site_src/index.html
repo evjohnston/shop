@@ -15,13 +15,22 @@
 </head>
 <body>
 
-<div class="shell">
+<!-- ======================================================== landing === -->
+<section class="landing" id="landing">
+  <div class="landing-in">
+    <img class="landing-logo" src="aoir-logo.png" srcset="aoir-logo.png 1x, aoir-logo@2x.png 2x" alt="Association of Internet Researchers">
+    <h1>Conference Shop</h1>
+    <p class="landing-sub">Browse the collection, pick your size and color, then scan the code with your phone to check out. Nothing to type here.</p>
+    <button class="start" id="start">Start shopping</button>
+    <p class="landing-foot">AoIR2026 · Regenerations · Ciudad de México</p>
+  </div>
+</section>
 
-  <!-- ====================================================== left rail === -->
+<!-- ========================================================== store === -->
+<div class="shell" id="shell" hidden>
   <aside class="rail">
     <button class="logo" id="home" aria-label="All products">
-      <img src="aoir-logo.png" srcset="aoir-logo.png 1x, aoir-logo@2x.png 2x"
-           alt="Association of Internet Researchers">
+      <img src="aoir-logo.png" srcset="aoir-logo.png 1x, aoir-logo@2x.png 2x" alt="Association of Internet Researchers">
     </button>
 
     <div class="field" id="searchWrap">
@@ -44,11 +53,12 @@
           <option value="new">Newest</option>
         </select>
       </label>
-      <p class="hint">Pick a size and color, then scan the code with your phone to check out.</p>
+      <button class="bagbtn" id="bagBtn" hidden>
+        <span>View bag</span><span class="bagn" id="bagN">0</span>
+      </button>
     </div>
   </aside>
 
-  <!-- ========================================================== main === -->
   <main>
     <header class="head">
       <h1 id="scope">All products</h1>
@@ -62,11 +72,14 @@
   </main>
 </div>
 
-<!-- ======================================================== detail === -->
+<!-- ========================================================= detail === -->
 <section class="sheet" id="sheet" hidden aria-modal="true" role="dialog">
   <div class="sheet-top">
     <button class="back" id="back"><span aria-hidden="true">←</span> All products</button>
     <div class="crumb" id="sheetTitle"></div>
+    <button class="bagbtn top" id="bagBtn2" hidden>
+      <span>Bag</span><span class="bagn" id="bagN2">0</span>
+    </button>
   </div>
 
   <div class="sheet-body" id="sheetBody">
@@ -91,14 +104,15 @@
       </div>
 
       <div class="qr">
-        <div class="qr-plate">
-          <canvas id="qr" width="260" height="260" aria-label="Checkout QR code"></canvas>
-        </div>
+        <div class="qr-plate"><canvas id="qr" aria-label="Checkout QR code"></canvas></div>
         <div class="qr-side">
-          <div class="qr-hd">Scan to check out</div>
-          <p class="qr-sb">Point your phone camera at the code. You'll check out on your own phone.</p>
+          <div class="qr-hd">Scan to buy this</div>
+          <p class="qr-sb">Point your phone camera at the code to check out this item on your own phone.</p>
+          <p class="qr-out">Not available to buy right now — please ask at the counter.</p>
           <div class="qr-vt" id="qrVariant"></div>
           <div class="qr-sku" id="pSku"></div>
+          <button class="addbtn" id="addBtn">Add to bag instead</button>
+          <p class="addnote">Buying more than one thing? Add them to a bag and scan a single code at the end.</p>
         </div>
       </div>
 
@@ -107,6 +121,35 @@
   </div>
 </section>
 
+<!-- ============================================================ bag === -->
+<section class="sheet" id="bag" hidden aria-modal="true" role="dialog">
+  <div class="sheet-top">
+    <button class="back" id="bagBack"><span aria-hidden="true">←</span> Keep shopping</button>
+    <div class="crumb">Your bag</div>
+    <button class="linkbtn" id="bagClear">Empty bag</button>
+  </div>
+  <div class="bag-body">
+    <div class="bag-list" id="bagList"></div>
+    <div class="bag-side">
+      <div class="qr-plate"><canvas id="bagQr" aria-label="Checkout QR code for your bag"></canvas></div>
+      <div class="bag-total"><span>Total</span><b id="bagTotal">$0.00</b></div>
+      <div class="qr-hd">Scan to check out</div>
+      <p class="qr-sb">One code for everything in your bag. Point your phone camera at it and check out there.</p>
+      <p class="qr-sb dim" id="bagCount"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= idle ask === -->
+<div class="idle" id="idle" hidden>
+  <div class="idle-card">
+    <h2>Still shopping?</h2>
+    <p>This screen resets in <b id="idleN">15</b> seconds so it's ready for the next person.</p>
+    <button class="start" id="idleStay">I'm still here</button>
+  </div>
+</div>
+
+<script src="qrcode.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

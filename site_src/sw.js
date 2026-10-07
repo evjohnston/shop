@@ -14,7 +14,7 @@
 
 const VERSION = "aoir-kiosk-__BUILD__";
 const SHELL = [
-  "./", "index.html", "styles.css", "fonts.css", "app.js", "data.json",
+  "./", "index.html", "styles.css", "fonts.css", "app.js", "qrcode.js", "data.json",
   "fonts/archivo-400-700-latin.woff2",
   "fonts/archivo-400-700-latin-ext.woff2",
   "fonts/plexmono-400-latin.woff2",

@@ -60,14 +60,21 @@ python3 verify_qr.py --live --sample 30
 
 ## The kiosk (`site/`)
 
-A static site with **no cart and no on-device checkout**. Shoppers browse, pick
-a color and size, and the page shows the QR code for that exact variant; they
-scan it with their own phone and check out there. Nothing is typed on the iPad.
+A static site with **no on-device checkout**. Shoppers browse, pick a color and
+size, and either scan one item's code or build a bag and scan a single code for
+the lot. Money is only ever handled on the shopper's own phone; nothing is typed
+on the iPad.
 
-- 68 products, 481 variants, ~12 MB total
+It runs as an unattended kiosk: a landing screen, then **90 seconds** of no
+touch returns it to that screen and empties the bag, with a "still shopping?"
+prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
+`site_src/app.js`.
+
+- 68 products, 481 variants, ~20 MB total
 - Per-product fabric and fit specs, pulled from `products.csv`
-- Each variant's QR ships as a ~230-byte module matrix that the browser draws on
-  a canvas — no QR library, and the codes are identical to the printed ones
+- QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
+  arbitrary combination of variants, so its code cannot be precomputed. The code
+  grows on screen as the payload grows, so a full bag stays scannable.
 - Categories, cross-cutting collections, search, and five sort orders
 - **Works offline.** A service worker caches the shell, catalog, photos, and
   fonts, so a wifi drop mid-conference doesn't blank the screen. (Checkout
@@ -142,3 +149,53 @@ Both are constants at the top of `build_site.py`:
 
 Fourthwall marks five products `SOLD_OUT`; per AoIR that flag is wrong, so the
 site ignores it and treats everything as available.
+
+
+## Multi-item checkout
+
+Fourthwall's checkout URL takes several variants at once:
+
+```
+https://shop.aoir.org/cart/checkout?products=<variantId>:<qty>,<variantId>:<qty>
+```
+
+Verified against the real checkout, reading the rendered totals rather than
+trusting the redirect: one item $25, two items $55, three items $90, and
+`:2` correctly gives quantity 2. An end-to-end run through the kiosk (bag of
+4 items across 3 lines, $155.00) produced a checkout that also said $155.00
+with the right quantities.
+
+That is what the bag is built on. The kiosk caps the bag at 15 distinct lines,
+because the URL grows ~38 characters per line and a denser QR gets harder to
+scan.
+
+## Sold-out products cannot be bought, whatever the stock looks like
+
+Fourthwall **enforces** `state: SOLD_OUT` at checkout. `/cart/checkout` refuses
+to create a session and bounces to `?error_message=Checkout unknown error`.
+Tested one variant from each: 5/5 sold-out products fail, 3/3 available ones
+succeed.
+
+This matters more than it sounds, because **one sold-out item breaks an entire
+bag** — the whole cart fails, not just that line.
+
+So the kiosk shows those products greyed out, with no code and no way to add
+them, rather than handing someone a code that dies in their hand. At the time of
+writing that is:
+
+- `'Online Trust' Unisex Tee`
+- `AoIR 'I Survived' Unisex Tee`
+- `AoIR2025 Conference Tote`
+- the two `Copy of …` duplicates, which are hidden anyway
+
+**The fix belongs in Fourthwall, not here.** If those items really are in stock,
+set them available in the Fourthwall admin, then:
+
+```bash
+python3 main.py            # re-fetch
+python3 build_site.py      # rebuild
+```
+
+and they go back on sale automatically. Note the printed cards in `qr_codes/`
+for those variants are dead for the same reason — `verify_qr.py --live` will
+flag them.
