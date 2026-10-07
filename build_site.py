@@ -40,10 +40,10 @@ from PIL import Image
 HIDE_SLUGS = {"aoirchive-hooded-sweatshirt-w-full-design-2"}
 # Fourthwall ENFORCES state=SOLD_OUT at checkout: /cart/checkout refuses to
 # create a session and bounces to ?error_message=Checkout unknown error. Tested
-# 5/5 sold-out products fail, 3/3 available ones succeed. So these cannot be
-# sold however the stock really looks, and one of them in a bag kills the whole
-# cart. The kiosk shows them but won't offer a code. Fix the state in
-# Fourthwall and rebuild to put them back on sale.
+# 5/5 sold-out products fail, 3/3 available ones succeed, and one in a bag kills
+# the whole cart. These are discontinued, so they are dropped from the shop
+# entirely. Set a product available again in Fourthwall and it comes straight
+# back on the next build.
 # "Copy of X" products are accidental Fourthwall duplicates of a product we
 # already list. Drop them so the same shirt doesn't appear twice.
 HIDE_NAME_PREFIXES = ("copy of",)
@@ -279,6 +279,9 @@ def main():
         if p.get("slug") in HIDE_SLUGS or name.lower().startswith(HIDE_NAME_PREFIXES):
             skipped.append(name)
             continue
+        if (p.get("state") or {}).get("type") == "SOLD_OUT":
+            skipped.append(f"{name} (sold out — no checkout possible)")
+            continue
 
         # Group variants by colour: Fourthwall gives every variant of a colour
         # the same photo set, so the gallery is per colour, not per size.
@@ -316,8 +319,6 @@ def main():
                 "url": url,
             })
 
-        sold_out = (p.get("state") or {}).get("type") == "SOLD_OUT"
-
         if not variants:
             skipped.append(f"{name} (no checkout links)")
             continue
@@ -342,7 +343,6 @@ def main():
             "priceMax": max(prices),
             "card": card,
             "created": p.get("createdAt", ""),
-            "soldOut": sold_out,
             "details": details_by_id.get(p["id"], []),
             "colors": [colors[c] for c in order],
             "sizes": sorted({v["size"] for v in variants}, key=size_key),
@@ -397,12 +397,6 @@ def main():
             if f.exists():
                 h.update(f.read_bytes())
         sw.write_text(sw.read_text().replace("__BUILD__", h.hexdigest()[:12]))
-
-    blocked = [p["name"] for p in kept if p["soldOut"]]
-    if blocked:
-        print(f"no checkout (Fourthwall state SOLD_OUT): {len(blocked)}")
-        for b in blocked:
-            print(f"           - {b}")
 
     nvar = sum(len(p["variants"]) for p in kept)
     size_mb = sum(f.stat().st_size for f in out.rglob("*") if f.is_file()) / 1e6

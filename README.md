@@ -70,7 +70,7 @@ touch returns it to that screen and empties the bag, with a "still shopping?"
 prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
 `site_src/app.js`.
 
-- 68 products, 481 variants, ~20 MB total
+- 65 products, 466 variants, ~20 MB total
 - Per-product fabric and fit specs, pulled from `products.csv`
 - QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
   arbitrary combination of variants, so its code cannot be precomputed. The code
@@ -169,33 +169,26 @@ That is what the bag is built on. The kiosk caps the bag at 15 distinct lines,
 because the URL grows ~38 characters per line and a denser QR gets harder to
 scan.
 
-## Sold-out products cannot be bought, whatever the stock looks like
+## Sold-out products are excluded everywhere
 
 Fourthwall **enforces** `state: SOLD_OUT` at checkout. `/cart/checkout` refuses
 to create a session and bounces to `?error_message=Checkout unknown error`.
 Tested one variant from each: 5/5 sold-out products fail, 3/3 available ones
-succeed.
+succeed. And **one sold-out item breaks an entire bag** — the whole cart fails,
+not just that line.
 
-This matters more than it sounds, because **one sold-out item breaks an entire
-bag** — the whole cart fails, not just that line.
+These products are discontinued, so they are dropped from both the links and
+the shop:
 
-So the kiosk shows those products greyed out, with no code and no way to add
-them, rather than handing someone a code that dies in their hand. At the time of
-writing that is:
+- `main.py` `is_unbuyable()` skips them in `checkout_links.csv`, so no printable
+  QR card is ever made for one
+- `build_site.py` leaves them out of the catalogue entirely
 
-- `'Online Trust' Unisex Tee`
-- `AoIR 'I Survived' Unisex Tee`
-- `AoIR2025 Conference Tote`
-- the two `Copy of …` duplicates, which are hidden anyway
+That currently removes 5 products / 23 variants: `'Online Trust' Unisex Tee`,
+`AoIR 'I Survived' Unisex Tee`, `AoIR2025 Conference Tote`, and the two
+`Copy of …` duplicates. The shop is 65 products / 466 variants, and there are
+496 printable cards.
 
-**The fix belongs in Fourthwall, not here.** If those items really are in stock,
-set them available in the Fourthwall admin, then:
-
-```bash
-python3 main.py            # re-fetch
-python3 build_site.py      # rebuild
-```
-
-and they go back on sale automatically. Note the printed cards in `qr_codes/`
-for those variants are dead for the same reason — `verify_qr.py --live` will
-flag them.
+Nothing is hardcoded — this keys off the live Fourthwall state. Set a product
+available again in the admin and it returns on the next `main.py` +
+`build_site.py` run.

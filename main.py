@@ -267,6 +267,15 @@ def is_archived(p):
     return "ARCHIV" in json.dumps([p.get("state"), p.get("status")]).upper()
 
 
+def is_unbuyable(p):
+    """Fourthwall refuses checkout for SOLD_OUT products: /cart/checkout will
+    not create a session and bounces to ?error_message=Checkout unknown error.
+    A link for one is dead on arrival, and one in a multi-item cart kills the
+    whole cart, so don't mint links or print QR cards for them."""
+    state = ((p.get("state") or {}).get("type") or "").upper()
+    return is_archived(p) or state == "SOLD_OUT"
+
+
 def is_digital(p):
     return any("DIGITAL" in str(p.get(k, "")).upper()
                for k in ("type", "productType", "offerType", "kind"))
@@ -442,8 +451,10 @@ def write_links_csv(products, out, shop_url):
     with open(out / "checkout_links.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["Product", "Variant", "Checkout Link"])
+        skipped = 0
         for p in products:
-            if is_archived(p):  # archived products can't be bought, so no link
+            if is_unbuyable(p):   # no checkout session is possible, so no link
+                skipped += 1
                 continue
             name = (p.get("name") or p.get("slug") or "").strip()
             for v in p.get("variants") or []:
@@ -452,7 +463,8 @@ def write_links_csv(products, out, shop_url):
                     continue
                 w.writerow([name, variant_label(v), f"{base}/cart/checkout?products={vid}:1"])
                 count += 1
-    print(f"Wrote checkout_links.csv: {count} links")
+    print(f"Wrote checkout_links.csv: {count} links"
+          + (f" ({skipped} products skipped: archived or sold out)" if skipped else ""))
 
 
 # ------------------------------------------------------------------ images

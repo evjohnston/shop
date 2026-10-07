@@ -477,23 +477,3 @@ main { flex: 1; margin-left: var(--railw); min-width: 0; padding: 26px var(--gut
   .bagrow { grid-template-columns: 50px minmax(0,1fr) auto; gap: 12px; }
   .bagpr { grid-column: 2 / -1; text-align: left; min-width: 0; }
 }
-
-/* Fourthwall blocks checkout for sold-out products, so the kiosk says so
-   plainly instead of showing a code that fails in someone's hand. */
-.plate.out img { opacity: .4; }
-.outtag {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-  font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--ink-2);
-  background: rgba(255,255,255,.92); padding: 6px 11px; border-radius: 2px;
-  white-space: nowrap;
-}
-.qr-out { display: none; }
-.qr.unavailable .qr-plate { display: none; }
-.qr.unavailable .qr-hd,
-.qr.unavailable .qr-sb:not(.qr-out),
-.qr.unavailable .addnote { display: none; }
-.qr.unavailable .qr-out {
-  display: block; font-size: 14px; color: var(--ink); line-height: 1.5;
-  margin: 0 0 4px; max-width: 32ch; font-weight: 500;
-}

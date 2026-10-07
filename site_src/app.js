@@ -214,9 +214,8 @@
           `${p.colors.length > 7 ? `<b>+${p.colors.length - 7}</b>` : ""}</div>`
         : "";
       b.innerHTML =
-        `<div class="plate${p.soldOut ? " out" : ""}"${p.card && p.card.bg ? ` style="background:${p.card.bg}"` : ""}>` +
-          `${p.card ? `<img src="${p.card.src}" alt="" loading="lazy" decoding="async">` : ""}` +
-          `${p.soldOut ? `<span class="outtag">Unavailable</span>` : ""}</div>` +
+        `<div class="plate"${p.card && p.card.bg ? ` style="background:${p.card.bg}"` : ""}>` +
+          `${p.card ? `<img src="${p.card.src}" alt="" loading="lazy" decoding="async">` : ""}</div>` +
         `<div class="cap"><div class="idx">${catalogNo.get(p.id)}</div>` +
           `<div class="nm"></div><div class="pr">${priceLabel(p)}</div>${sw}</div>`;
       b.querySelector(".nm").textContent = p.name;   // names contain quotes
@@ -374,20 +373,6 @@
       el.qr.width = el.qr.height = 0;
     };
 
-    // Fourthwall refuses checkout for these, and one in a bag breaks the whole
-    // cart, so never show a code that would just fail in someone's hand.
-    if (current.soldOut) {
-      el.pPrice.textContent = v ? money(v.price) : priceLabel(current);
-      el.qrVariant.textContent = "";
-      el.pSku.textContent = v && v.sku ? `SKU ${v.sku}` : "";
-      el.addBtn.disabled = true;
-      el.addBtn.textContent = "Unavailable";
-      clearQR();
-      el.qr.closest(".qr").classList.add("unavailable");
-      return;
-    }
-    el.qr.closest(".qr").classList.remove("unavailable");
-
     if (!v) {
       el.pPrice.textContent = priceLabel(current);
       el.qrVariant.textContent = "This combination isn't available.";
@@ -482,7 +467,7 @@
 
     el.addBtn.addEventListener("click", () => {
       const v = variantFor(current, curColor, curSize);
-      if (!v || current.soldOut) return;
+      if (!v) return;
       if (addToBag(current, v)) {
         el.addBtn.textContent = "Added ✓";
         setTimeout(() => { if (current) el.addBtn.textContent = "Add to bag instead"; }, 1200);
