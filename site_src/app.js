@@ -9,7 +9,7 @@
 
   const $ = (id) => document.getElementById(id);
   const el = {
-    grid: $("grid"), chips: $("chips"), count: $("count"), scope: $("scope"),
+    grid: $("grid"), chips: $("menu"), count: $("count"), scope: $("scope"),
     empty: $("empty"), q: $("q"), clearQ: $("clearQ"), searchWrap: $("searchWrap"),
     sort: $("sort"), home: $("home"), sheet: $("sheet"), back: $("back"),
     sheetTitle: $("sheetTitle"), sheetBody: $("sheetBody"),
@@ -104,12 +104,12 @@
     el.grid.innerHTML = "";
     el.empty.hidden = list.length > 0;
     el.count.textContent = list.length
-      ? `${String(list.length).padStart(2, "0")} item${list.length === 1 ? "" : "s"}`
-      : "No items";
+      ? `${list.length} item${list.length === 1 ? "" : "s"}`
+      : "";
     const term = el.q.value.trim();
     el.scope.textContent = term
-      ? `"${term}"`
-      : (filter === "all" ? "Complete catalog" : (label.get(filter) || ""));
+      ? `Search: ${term}`
+      : (filter === "all" ? "All products" : (label.get(filter) || ""));
 
     const frag = document.createDocumentFragment();
     for (const p of list) {
@@ -124,7 +124,7 @@
         : "";
 
       b.innerHTML =
-        `<div class="plate"${p.card ? ` style="background:${p.card.bg}"` : ""}>${p.card
+        `<div class="plate"${p.card && p.card.bg ? ` style="background:${p.card.bg}"` : ""}>${p.card
           ? `<img src="${p.card.src}" alt="" loading="lazy" decoding="async">` : ""}</div>` +
         `<div class="cap">` +
           `<div class="idx">${catalogNo.get(p.id)}</div>` +
@@ -145,25 +145,36 @@
       const b = document.createElement("button");
       b.type = "button";
       b.setAttribute("aria-pressed", String(filter === id));
-      b.innerHTML = `${text}${n != null ? `<span class="n">${String(n).padStart(2, "0")}</span>` : ""}`;
+      const nm = document.createElement("span");
+      nm.textContent = text;                       // labels contain quotes
+      const ct = document.createElement("span");
+      ct.className = "n";
+      ct.textContent = n;
+      b.append(nm, ct);
       b.addEventListener("click", () => {
         filter = id;
-        // The 2026 collection carries the CDMX pink; everything else is AoIR teal.
+        // The 2026 collection carries the CDMX pink; everything else is indigo.
         document.body.dataset.accent = id === "aoir2026" ? "pink" : "";
         buildChips();
         render();
       });
       return b;
     };
+    const grp = (text) => {
+      const d = document.createElement("div");
+      d.className = "grp";
+      d.textContent = text;
+      return d;
+    };
+
     el.chips.innerHTML = "";
-    el.chips.appendChild(mk("all", "All", DATA.products.length));
+    el.chips.append(grp("Collections"), mk("all", "All products", DATA.products.length));
     for (const c of DATA.collections) el.chips.appendChild(mk(c.id, c.label, c.count));
-    if (DATA.collections.length && DATA.categories.length) {
-      const r = document.createElement("span");
-      r.className = "rule";
-      el.chips.appendChild(r);
+    if (DATA.categories.length) {
+      el.chips.appendChild(grp("Browse by type"));
+      for (const c of DATA.categories) el.chips.appendChild(mk(c.id, c.label, c.count));
     }
-    for (const c of DATA.categories) el.chips.appendChild(mk(c.id, c.label, c.count));
+    el.chips.scrollTop = 0;
   }
 
   /* ---------------------------------------------------------------- product */
@@ -260,8 +271,9 @@
     const imgs = (c.images && c.images.length) ? c.images : (current.card ? [current.card] : []);
     const show = (im) => {
       el.galMain.src = im.src;
-      // Letterbox against the shot's own backdrop so nothing is ever cropped.
-      el.galMain.parentElement.style.background = im.bg;
+      // Cut-outs keep their alpha and sit on the plate colour; only the few
+      // flat-background shots carry a bg of their own.
+      el.galMain.parentElement.style.background = im.bg || "";
     };
     if (imgs.length) show(imgs[0]);
     el.galMain.alt = `${current.name} — ${c.name}`;
@@ -271,7 +283,7 @@
     imgs.forEach((im, i) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.style.background = im.bg;
+      if (im.bg) b.style.background = im.bg;
       b.setAttribute("aria-pressed", String(i === 0));
       b.innerHTML = `<img src="${im.src}" alt="" loading="lazy" decoding="async">`;
       b.addEventListener("click", () => {

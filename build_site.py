@@ -57,11 +57,50 @@ CATEGORIES = [
     ("desk",       "Desk",                r"mousepad|mouse pad|notebook"),
 ]
 
+# The shop's actual Fourthwall collections. Membership is by exact product name
+# because the list endpoint doesn't return collections; run
+#   python3 main.py --categories-from-collections
+# to write fourthwall_export/categories.json and this is replaced by the real
+# mapping from the API.
 COLLECTIONS = [
-    ("aoir2026",  "AoIR 2026 Regenerations", r"aoir2026|regenerations|cdmx"),
-    ("aoirchive", "AoIRchive",               r"^aoirchive"),
-    ("slogans",   "Slogan Tees",             r"^'|influencer|listserv|baud|wifi|karaoke|parasocial|h-index|reply-all|aspirational|impact factor|context collapse|went viral|brand deals|tiktoks|tech support|inbox overload|online trust|online safety|platform engagement|i survived"),
-    ("essentials","AoIR Essentials",         r"^aoir (unisex|tote|classic|ceramic|branded|white|logo|executive)"),
+    ("aoir2026", "AoIR2026", [
+        "AoIR CDMX Logo Sticker - Pink",
+        "AoIR CDMX Logo - Orange",
+        "AoIR2026 Regenerations Unisex Conference Tee 'se habla español' - Orange",
+        "AoIR2026 Regenerations Unisex Conference Tee 'se habla español' - Pink",
+        "AoIR2026 Regenerations Unisex Conference Tee - Pink",
+        "AoIR2026 Regenerations Unisex Conference Tee - Orange",
+        "AoIR2026 Regenerations Unisex Conference Hoodie - Pink",
+        "AoIR2026 Regenerations Unisex Conference Hoodie - Orange",
+        "AoIR2026 Conference Patch - CDMX",
+    ]),
+    ("aoirchive", "AoIRchive", "^aoirchive"),          # a prefix rule, not a list
+    ("seriousness", "'In All Seriousness'", [
+        "'Tech Support' Unisex Tee",
+        "'I Survived the Listserv' Unisex Tee",
+        "'Online Safety' Unisex Tee",
+        "'AIR-L Inbox Overload' Unisex Tee",
+        "'Conference Wifi' Unisex Tee",
+        "'Reply-all Disasters' Unisex Tee",
+        "'Platform Engagement' Unisex Tee",
+        "'AoIR Karaoke' Unisex Tee",
+        "'14.4 Baud' Unisex Tee",
+    ]),
+    ("influencer", "Influencer", [
+        "'Influencer?' Tenure Version - Unisex Tee",
+        "'I coded 2000 tiktoks...' - Unisex Tee",
+        "'Context collapse...' - Unisex Tee",
+        "'Impact factor is just engagement...' - Unisex Tee",
+        "'I am an AoIR Influencer' V2 - Unisex Tee",
+        "'I am an AoIR Influencer' V1 Unisex Tee",
+        '\'Parasocial with Everyone..." - Unisex Tee',
+        "'I do aspirational labor' - Unisex Tee",
+        "'Brand deals and grants' - Unisex Tee",
+        "'Yes, Internet Influencer is a Job' - Unisex Tee",
+        "'Influencer?' Dissertation Version - Unisex Tee",
+        "'My H-Index is higher' - Unisex Tee",
+        "'My paper went viral' - Unisex Tee",
+    ]),
 ]
 
 SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL",
@@ -69,6 +108,10 @@ SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL",
 
 CARD_W, DETAIL_W = 560, 1100
 MAX_IMAGES_PER_COLOR = 4
+
+
+def slugify(s):
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "x"
 
 
 def classify(name, table, default=None):
@@ -79,9 +122,18 @@ def classify(name, table, default=None):
     return default
 
 
-def collections_for(name):
-    low = name.lower()
-    return [cid for cid, label, pat in COLLECTIONS if re.search(pat, low)]
+def collections_for(name, api_map=None):
+    """API collection names when we have them, else the rules above."""
+    if api_map is not None:
+        return api_map
+    out = []
+    for cid, label, rule in COLLECTIONS:
+        if isinstance(rule, str):
+            if re.search(rule, name.lower()):
+                out.append(cid)
+        elif name in rule:
+            out.append(cid)
+    return out
 
 
 def size_key(s):
@@ -118,6 +170,7 @@ class Images:
         """Average the four corners. Product shots sit on a flat background, so
         this is the colour to letterbox against when the photo doesn't fill its
         box - the image then looks like it floats, at any aspect ratio."""
+        im = im.convert("RGB")
         w, h = im.size
         pts = [im.getpixel((1, 1)), im.getpixel((w - 2, 1)),
                im.getpixel((1, h - 2)), im.getpixel((w - 2, h - 2))]
@@ -141,23 +194,38 @@ class Images:
         dest = self.outdir / name
         rel = f"img/{name}"
 
-        bg = "#1a1a1a"
+        bg, alpha = "", False
         try:
             with Image.open(src) as im:
-                im = im.convert("RGB")
+                # Most of these shots are cut-outs with a real alpha channel.
+                # Flattening them (im.convert("RGB")) paints the product onto
+                # black, which is wrong on any page. Keep the alpha and let CSS
+                # decide the backdrop.
+                has_alpha = im.mode in ("RGBA", "LA", "P") and (
+                    im.mode != "P" or "transparency" in im.info
+                )
+                im = im.convert("RGBA" if has_alpha else "RGB")
+                if has_alpha:
+                    lo, _ = im.getchannel("A").getextrema()
+                    alpha = lo < 250
+                    if not alpha:
+                        im = im.convert("RGB")
                 if im.width > width:
                     h = round(im.height * width / im.width)
                     im = im.resize((width, h), Image.LANCZOS)
-                bg = self._backdrop(im)
+                if not alpha:
+                    bg = self._backdrop(im)
                 if self.enabled and not dest.exists():
-                    im.save(dest, "WEBP", quality=78, method=5)
+                    im.save(dest, "WEBP", quality=80, method=5)
                     self.written += 1
         except Exception as e:
             print(f"  ! {local_rel}: {e}", file=sys.stderr)
             self.cache[key] = None
             return None
 
-        out = {"src": rel, "bg": bg}
+        out = {"src": rel}
+        if bg:
+            out["bg"] = bg
         self.cache[key] = out
         return out
 
@@ -172,6 +240,10 @@ def main():
 
     exp, out, src = Path(args.export), Path(args.out), Path(args.src)
     products = json.loads((exp / "products.json").read_text())
+    cats_path = exp / "categories.json"
+    api_cats = json.loads(cats_path.read_text()) if cats_path.exists() else None
+    if api_cats:
+        print("using real collections from categories.json")
     shop = json.loads((exp / "shop.json").read_text()) if (exp / "shop.json").exists() else {}
 
     url_by_vid = {}
@@ -274,7 +346,9 @@ def main():
             "slug": p.get("slug") or "",
             "name": name,
             "category": classify(name, CATEGORIES, "desk"),
-            "collections": collections_for(name),
+            "collections": collections_for(
+                name,
+                [slugify(c) for c in api_cats[p["id"]]] if api_cats and p["id"] in api_cats else None),
             "priceMin": min(prices),
             "priceMax": max(prices),
             "card": card,
@@ -300,8 +374,14 @@ def main():
         },
         "categories": [{"id": c, "label": l, "count": counts.get(c, 0)}
                        for c, l, _ in CATEGORIES if counts.get(c)],
-        "collections": [{"id": c, "label": l, "count": ccounts.get(c, 0)}
-                        for c, l, _ in COLLECTIONS if ccounts.get(c)],
+        "collections": ([{"id": c, "label": l, "count": ccounts.get(c, 0)}
+                         for c, l, _ in COLLECTIONS if ccounts.get(c)]
+                        if not api_cats else
+                        [{"id": slugify(n), "label": n, "count": k}
+                         for n, k in sorted(
+                             {n: sum(1 for pr in kept if slugify(n) in pr["collections"])
+                              for ns in api_cats.values() for n in ns}.items(),
+                             key=lambda x: -x[1]) if k]),
         "products": kept,
     }
 

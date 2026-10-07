@@ -5,67 +5,67 @@
 <title>AoIR Shop</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0d0c0c">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
 <meta name="description" content="Browse AoIR merch and scan to check out on your phone.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230d0c0c'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%237EBEC5'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23ffffff'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%2316161a'/%3E%3C/svg%3E">
 <link rel="preload" as="font" type="font/woff2" href="fonts/archivo-400-700-latin.woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header>
-  <div class="bar">
-    <!-- Lockup after the AoIR mark: node, rule, wordmark, divider, stacked caps. -->
-    <button class="identity" id="home" aria-label="All products">
-      <span class="node" aria-hidden="true"></span>
-      <span class="lead" aria-hidden="true"></span>
-      <span class="wordmark">a(o).i.r</span>
-      <span class="divider" aria-hidden="true"></span>
-      <span class="org">Association&nbsp;of<br>Internet&nbsp;Researchers</span>
+<div class="shell">
+
+  <!-- ====================================================== left rail === -->
+  <aside class="rail">
+    <button class="logo" id="home" aria-label="All products">
+      <img src="aoir-logo.png" srcset="aoir-logo.png 1x, aoir-logo@2x.png 2x"
+           alt="Association of Internet Researchers">
     </button>
 
-    <div class="tools">
-      <div class="field" id="searchWrap">
-        <input id="q" type="search" placeholder="SEARCH" autocomplete="off"
-               autocorrect="off" autocapitalize="off" spellcheck="false"
-               enterkeyhint="search" aria-label="Search products">
-        <button class="clear" id="clearQ" aria-label="Clear search">✕</button>
-      </div>
-      <div class="field select">
+    <div class="field" id="searchWrap">
+      <input id="q" type="search" placeholder="Search" autocomplete="off"
+             autocorrect="off" autocapitalize="off" spellcheck="false"
+             enterkeyhint="search" aria-label="Search products">
+      <button class="clear" id="clearQ" aria-label="Clear search">✕</button>
+    </div>
+
+    <nav class="menu" id="menu" aria-label="Collections and categories"></nav>
+
+    <div class="rail-foot">
+      <label class="sortrow">
+        <span>Sort</span>
         <select id="sort" aria-label="Sort products">
           <option value="featured">Featured</option>
-          <option value="price-asc">Price ↑</option>
-          <option value="price-desc">Price ↓</option>
-          <option value="name">A–Z</option>
+          <option value="price-asc">Price, low to high</option>
+          <option value="price-desc">Price, high to low</option>
+          <option value="name">Name, A–Z</option>
           <option value="new">Newest</option>
         </select>
-      </div>
+      </label>
+      <p class="hint">Pick a size and color, then scan the code with your phone to check out.</p>
     </div>
-  </div>
+  </aside>
 
-  <nav class="filters" id="chips" aria-label="Collections and categories"></nav>
-</header>
+  <!-- ========================================================== main === -->
+  <main>
+    <header class="head">
+      <h1 id="scope">All products</h1>
+      <span class="ledger" id="count"></span>
+    </header>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>
+      <h2>No results</h2>
+      <p>Try another collection, or clear the search.</p>
+    </div>
+  </main>
+</div>
 
-<main>
-  <div class="ledger">
-    <span id="count"></span>
-    <span class="dot" aria-hidden="true"></span>
-    <span id="scope"></span>
-  </div>
-  <div class="grid" id="grid"></div>
-  <div class="empty" id="empty" hidden>
-    <h2>No results</h2>
-    <p>Try another collection, or clear the search.</p>
-  </div>
-</main>
-
+<!-- ======================================================== detail === -->
 <section class="sheet" id="sheet" hidden aria-modal="true" role="dialog">
   <div class="sheet-top">
-    <button class="back" id="back">
-      <span aria-hidden="true">←</span> All products
-    </button>
+    <button class="back" id="back"><span aria-hidden="true">←</span> All products</button>
     <div class="crumb" id="sheetTitle"></div>
   </div>
 
@@ -77,7 +77,7 @@
 
     <div class="spec">
       <div class="eyebrow"><span id="pIdx"></span><i aria-hidden="true"></i><span id="pCat"></span></div>
-      <h1 id="pName"></h1>
+      <h2 id="pName"></h2>
       <p class="price" id="pPrice"></p>
 
       <div class="opt" id="colorOpt">
@@ -95,7 +95,7 @@
           <canvas id="qr" width="260" height="260" aria-label="Checkout QR code"></canvas>
         </div>
         <div class="qr-side">
-          <div class="qr-hd">Scan to<br>check out</div>
+          <div class="qr-hd">Scan to check out</div>
           <p class="qr-sb">Point your phone camera at the code. You'll check out on your own phone.</p>
           <div class="qr-vt" id="qrVariant"></div>
           <div class="qr-sku" id="pSku"></div>
