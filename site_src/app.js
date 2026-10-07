@@ -21,7 +21,10 @@
     empty: $("empty"), q: $("q"), clearQ: $("clearQ"), searchWrap: $("searchWrap"),
     sort: $("sort"), home: $("home"),
     sheet: $("sheet"), back: $("back"), sheetTitle: $("sheetTitle"), sheetBody: $("sheetBody"),
-    galMain: $("galMain"), galStrip: $("galStrip"),
+    galMain: $("galMain"), galStrip: $("galStrip"), galZoom: $("galZoom"),
+    lightbox: $("lightbox"), lbStage: $("lbStage"), lbImg: $("lbImg"),
+    lbClose: $("lbClose"), lbIn: $("lbIn"), lbOut: $("lbOut"),
+    lbPct: $("lbPct"), lbTip: $("lbTip"),
     pName: $("pName"), pPrice: $("pPrice"), pSku: $("pSku"),
     pIdx: $("pIdx"), pCat: $("pCat"), pDetails: $("pDetails"),
     colorOpt: $("colorOpt"), colors: $("colors"), colorVal: $("colorVal"),
@@ -297,6 +300,7 @@
   }
 
   function closeProduct() {
+    closeZoom();
     el.sheet.hidden = true;
     current = null;
     document.body.style.overflow = "";
@@ -391,9 +395,135 @@
     drawQR(el.qr, v.url);
   }
 
+  /* -------------------------------------------------------------- zoom */
+
+  // A pinch/pan viewer rather than native page zoom: the kiosk runs with
+  // user-scalable=no so the layout can't be wrecked, which also rules out
+  // pinching the page. This keeps the gesture but confines it to the photo.
+  const MIN_Z = 1, MAX_Z = 4;
+  let z = 1, tx = 0, ty = 0;
+  const pointers = new Map();
+  let pinchStart = 0, zStart = 1, panFrom = null, lastTap = 0;
+
+  function clampPan() {
+    // Don't let the photo be dragged off into empty space.
+    const r = el.lbImg.getBoundingClientRect();
+    const w = r.width / z, h = r.height / z;         // unscaled size on screen
+    const maxX = Math.max(0, (w * z - Math.min(w * z, window.innerWidth)) / 2);
+    const maxY = Math.max(0, (h * z - Math.min(h * z, window.innerHeight)) / 2);
+    tx = Math.max(-maxX, Math.min(maxX, tx));
+    ty = Math.max(-maxY, Math.min(maxY, ty));
+  }
+
+  function applyZoom(smooth) {
+    if (z <= MIN_Z) { z = MIN_Z; tx = ty = 0; }
+    clampPan();
+    el.lbStage.classList.toggle("smooth", !!smooth);
+    el.lbImg.style.transform = `translate(${tx}px, ${ty}px) scale(${z})`;
+    el.lbPct.textContent = Math.round(z * 100) + "%";
+    el.lbIn.disabled = z >= MAX_Z - 0.001;
+    el.lbOut.disabled = z <= MIN_Z + 0.001;
+    el.lbStage.style.cursor = z > 1 ? "grab" : "zoom-out";
+    if (smooth) setTimeout(() => el.lbStage.classList.remove("smooth"), 240);
+  }
+
+  function zoomAt(next, cx, cy) {
+    next = Math.max(MIN_Z, Math.min(MAX_Z, next));
+    const r = el.lbStage.getBoundingClientRect();
+    const ox = (cx ?? r.width / 2) - r.width / 2;
+    const oy = (cy ?? r.height / 2) - r.height / 2;
+    // Keep the point under the fingers pinned while the scale changes.
+    tx = ox - ((ox - tx) * next) / z;
+    ty = oy - ((oy - ty) * next) / z;
+    z = next;
+  }
+
+  function openZoom() {
+    if (!el.galMain.src) return;
+    el.lbImg.src = el.galMain.src;
+    el.lbImg.alt = el.galMain.alt;
+    z = 1; tx = ty = 0;
+    applyZoom(false);
+    el.lbTip.classList.remove("gone");
+    setTimeout(() => el.lbTip.classList.add("gone"), 3200);
+    el.lightbox.hidden = false;
+  }
+  const closeZoom = () => { el.lightbox.hidden = true; pointers.clear(); };
+
+  function wireZoom() {
+    el.galZoom.addEventListener("click", openZoom);
+    el.lbClose.addEventListener("click", closeZoom);
+    el.lbIn.addEventListener("click", () => { zoomAt(z * 1.6); applyZoom(true); });
+    el.lbOut.addEventListener("click", () => { zoomAt(z / 1.6); applyZoom(true); });
+
+    el.lbStage.addEventListener("pointerdown", (e) => {
+      el.lbStage.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinchStart = Math.hypot(a.x - b.x, a.y - b.y);
+        zStart = z;
+        panFrom = null;
+      } else if (pointers.size === 1) {
+        panFrom = { x: e.clientX, y: e.clientY, tx, ty };
+      }
+    });
+
+    el.lbStage.addEventListener("pointermove", (e) => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (pointers.size === 2 && pinchStart) {
+        const [a, b] = [...pointers.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        const r = el.lbStage.getBoundingClientRect();
+        zoomAt(zStart * (d / pinchStart),
+               (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+        applyZoom(false);
+      } else if (pointers.size === 1 && panFrom && z > 1) {
+        el.lbStage.classList.add("panning");
+        tx = panFrom.tx + (e.clientX - panFrom.x);
+        ty = panFrom.ty + (e.clientY - panFrom.y);
+        applyZoom(false);
+      }
+    });
+
+    const release = (e) => {
+      pointers.delete(e.pointerId);
+      el.lbStage.classList.remove("panning");
+      if (pointers.size < 2) pinchStart = 0;
+      if (pointers.size === 0) panFrom = null;
+    };
+    el.lbStage.addEventListener("pointerup", release);
+    el.lbStage.addEventListener("pointercancel", release);
+
+    // double-tap toggles between fit and 2.5x, tap on the backdrop closes
+    el.lbStage.addEventListener("click", (e) => {
+      const now = Date.now();
+      const dbl = now - lastTap < 320;
+      lastTap = now;
+      const r = el.lbStage.getBoundingClientRect();
+      const onImage = e.target === el.lbImg;
+      if (dbl) {
+        zoomAt(z > 1.05 ? 1 : 2.5, e.clientX - r.left, e.clientY - r.top);
+        applyZoom(true);
+      } else if (!onImage && z <= 1.05) {
+        closeZoom();
+      }
+    });
+
+    el.lbStage.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const r = el.lbStage.getBoundingClientRect();
+      zoomAt(z * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX - r.left, e.clientY - r.top);
+      applyZoom(false);
+    }, { passive: false });
+  }
+
   /* ---------------------------------------------------- kiosk lifecycle */
 
   function toLanding() {
+    closeZoom();
     closeProduct();
     closeBag();
     el.idle.hidden = true;
@@ -454,6 +584,7 @@
       el.searchWrap.classList.remove("has-value");
       render(); el.q.focus();
     });
+    wireZoom();
     el.sort.addEventListener("change", render);
     el.back.addEventListener("click", closeProduct);
     el.home.addEventListener("click", () => {
@@ -482,7 +613,8 @@
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
-      if (!el.bag.hidden) closeBag();
+      if (!el.lightbox.hidden) closeZoom();
+      else if (!el.bag.hidden) closeBag();
       else if (!el.sheet.hidden) closeProduct();
     });
     document.addEventListener("gesturestart", (e) => e.preventDefault());

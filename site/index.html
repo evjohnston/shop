@@ -84,7 +84,10 @@
 
   <div class="sheet-body" id="sheetBody">
     <div class="gal">
-      <div class="plate lg"><img id="galMain" alt=""></div>
+      <button class="plate lg" id="galZoom" aria-label="Enlarge photo">
+        <img id="galMain" alt="">
+        <span class="zoomhint" aria-hidden="true">Tap to enlarge</span>
+      </button>
       <div class="strip" id="galStrip"></div>
     </div>
 
@@ -138,6 +141,20 @@
     </div>
   </div>
 </section>
+
+<!-- ========================================================== zoom === -->
+<div class="lightbox" id="lightbox" hidden aria-modal="true" role="dialog">
+  <div class="lb-stage" id="lbStage">
+    <img id="lbImg" alt="" draggable="false">
+  </div>
+  <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
+  <div class="lb-bar">
+    <button class="lb-zb" id="lbOut" aria-label="Zoom out">−</button>
+    <span class="lb-pct" id="lbPct">100%</span>
+    <button class="lb-zb" id="lbIn" aria-label="Zoom in">+</button>
+  </div>
+  <p class="lb-tip" id="lbTip">Pinch or double-tap to zoom · drag to move</p>
+</div>
 
 <!-- ======================================================= idle ask === -->
 <div class="idle" id="idle" hidden>

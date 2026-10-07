@@ -198,7 +198,17 @@ main { flex: 1; margin-left: var(--railw); min-width: 0; padding: 26px var(--gut
   .spec { max-width: 580px; }
 }
 
-.plate.lg { aspect-ratio: 4/5; max-height: calc(100vh - 250px); }
+.plate.lg {
+  aspect-ratio: 4/5; max-height: calc(100vh - 250px);
+  width: 100%; padding: 0; display: block; cursor: zoom-in;
+}
+.zoomhint {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-2);
+  background: rgba(255,255,255,.88); padding: 6px 12px; border-radius: 2px;
+  pointer-events: none; white-space: nowrap;
+}
 
 .strip { display: flex; gap: 8px; margin-top: 10px; }
 .strip:empty { display: none; }
@@ -351,23 +361,23 @@ main { flex: 1; margin-left: var(--railw); min-width: 0; padding: 26px var(--gut
   padding: 40px; text-align: center; cursor: pointer;
 }
 .landing[hidden] { display: none; }
-.landing-in { max-width: 560px; }
-.landing-logo { width: min(340px, 64vw); height: auto; margin: 0 auto 38px; display: block; }
+.landing-in { max-width: 680px; }
+.landing-logo { width: min(460px, 74vw); height: auto; margin: 0 auto 46px; display: block; }
 .landing h1 {
-  font-size: clamp(30px, 5vw, 46px); font-weight: 600;
-  letter-spacing: -.03em; margin: 0 0 16px; line-height: 1.08;
+  font-size: clamp(38px, 6.4vw, 62px); font-weight: 600;
+  letter-spacing: -.03em; margin: 0 0 20px; line-height: 1.06;
 }
 .landing-sub {
-  font-size: 16px; line-height: 1.6; color: var(--ink-2);
-  margin: 0 auto 36px; max-width: 42ch;
+  font-size: 19px; line-height: 1.58; color: var(--ink-2);
+  margin: 0 auto 44px; max-width: 40ch;
 }
 .start {
   background: var(--accent); color: #fff; border-radius: 2px;
-  padding: 17px 40px; font-size: 16px; font-weight: 600; letter-spacing: -.01em;
+  padding: 22px 56px; font-size: 20px; font-weight: 600; letter-spacing: -.01em;
 }
 .start:active { opacity: .85; }
 .landing-foot {
-  margin: 40px 0 0; font-family: var(--mono); font-size: 9.5px;
+  margin: 48px 0 0; font-family: var(--mono); font-size: 9.5px;
   letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3);
 }
 
@@ -476,4 +486,62 @@ main { flex: 1; margin-left: var(--railw); min-width: 0; padding: 26px var(--gut
 @media (max-width: 640px) {
   .bagrow { grid-template-columns: 50px minmax(0,1fr) auto; gap: 12px; }
   .bagpr { grid-column: 2 / -1; text-align: left; min-width: 0; }
+}
+
+
+/* ============================================================== zoom === */
+
+.lightbox {
+  position: fixed; inset: 0; z-index: 400; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  overscroll-behavior: contain; touch-action: none;
+}
+.lightbox[hidden] { display: none; }
+
+.lb-stage {
+  position: absolute; inset: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  touch-action: none; cursor: grab;
+}
+.lb-stage.panning { cursor: grabbing; }
+.lb-stage img {
+  max-width: 92vw; max-height: 88vh; object-fit: contain;
+  transform-origin: center center; will-change: transform;
+  user-select: none; -webkit-user-drag: none;
+}
+.lb-stage.smooth img { transition: transform .22s cubic-bezier(.2,.8,.3,1); }
+
+.lb-close {
+  position: absolute; top: 18px; right: 20px; z-index: 2;
+  width: 46px; height: 46px; border-radius: 50%; font-size: 17px;
+  background: var(--plate); color: var(--ink);
+}
+.lb-close:active { background: var(--line); }
+
+.lb-bar {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 2; display: flex; align-items: center; gap: 4px;
+  background: #fff; border-radius: 999px; padding: 5px;
+  box-shadow: 0 2px 18px rgba(0,0,0,.14);
+}
+.lb-zb { width: 44px; height: 44px; border-radius: 50%; font-size: 20px; color: var(--ink); }
+.lb-zb:active { background: var(--plate); }
+.lb-zb:disabled { opacity: .3; }
+.lb-pct {
+  min-width: 56px; text-align: center; font-family: var(--mono);
+  font-size: 11px; letter-spacing: .06em; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-tip {
+  position: absolute; bottom: 84px; left: 50%; transform: translateX(-50%);
+  z-index: 2; margin: 0; font-family: var(--mono); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+  white-space: nowrap; transition: opacity .3s;
+}
+.lb-tip.gone { opacity: 0; }
+
+@media (max-width: 640px) {
+  .lb-stage img { max-width: 96vw; max-height: 80vh; }
+  .lb-tip { font-size: 8px; }
 }

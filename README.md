@@ -70,12 +70,16 @@ touch returns it to that screen and empties the bag, with a "still shopping?"
 prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
 `site_src/app.js`.
 
-- 61 products, 440 variants, ~19 MB total
+- 61 products, 440 variants, ~26 MB total
 - Per-product fabric and fit specs, pulled from `products.csv`
 - QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
   arbitrary combination of variants, so its code cannot be precomputed. The code
   grows on screen as the payload grows, so a full bag stays scannable.
 - Categories, cross-cutting collections, search, and five sort orders
+- Tap a product photo for a full-screen viewer: pinch, double-tap or the
+  +/− buttons to zoom to 400%, drag to pan. Gallery images are 1400px so the
+  zoom stays sharp; the kiosk disables page zoom, so this is its own viewer
+  rather than native pinch
 - **Works offline.** A service worker caches the shell, catalog, photos, and
   fonts, so a wifi drop mid-conference doesn't blank the screen. (Checkout
   happens on the shopper's phone, so it needs their connection, not yours.)

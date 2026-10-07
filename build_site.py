@@ -108,7 +108,7 @@ COLLECTIONS = [
 SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL",
               "11oz", "15oz", "One size"]
 
-CARD_W, DETAIL_W = 560, 1100
+CARD_W, DETAIL_W = 560, 1400   # DETAIL_W doubles as the zoom resolution
 MAX_IMAGES_PER_COLOR = 4
 
 
