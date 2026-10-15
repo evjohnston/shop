@@ -76,6 +76,10 @@ COLLECTIONS = [
         "AoIR2026 Regenerations Unisex Conference Hoodie - Orange",
         "AoIR2026 Conference Patch - CDMX",
     ]),
+    ("aoir2026-special-requests", "AoIR2026 Special Requests", [
+        "'Fuck impact factor' - Unisex Tee - Censored",
+        "'Fuck impact factor' - Unisex Tee - Uncensored",
+    ]),
     ("aoirchive", "AoIRchive Collection", "^aoirchive"),          # a prefix rule, not a list
     ("seriousness", "'In All Seriousness' Collection", [
         "'Tech Support' Unisex Tee",
@@ -130,6 +134,16 @@ def classify(name, table, default=None):
         if re.search(pat, low):
             return cid
     return default
+
+
+def collection_id(name):
+    """Fourthwall collection name -> site id. Known collections keep the ids the
+    kiosk is keyed to (the hero and pink accent look for "aoir2026"); new ones
+    from the API get a slug."""
+    for cid, label, _ in COLLECTIONS:
+        if name.strip().lower() == label.lower():
+            return cid
+    return slugify(name)
 
 
 def collections_for(name, api_map=None):
@@ -239,6 +253,9 @@ def main():
     products = json.loads((exp / "products.json").read_text())
     cats_path = exp / "categories.json"
     api_cats = json.loads(cats_path.read_text()) if cats_path.exists() else None
+    if api_cats:
+        # Fourthwall returns some names HTML-escaped ("&#39;In All Seriousness&#39;").
+        api_cats = {pid: [html.unescape(n) for n in ns] for pid, ns in api_cats.items()}
     if api_cats:
         print("using real collections from categories.json")
     shop = json.loads((exp / "shop.json").read_text()) if (exp / "shop.json").exists() else {}
@@ -358,7 +375,7 @@ def main():
             "category": classify(name, CATEGORIES, "desk"),
             "collections": collections_for(
                 name,
-                [slugify(c) for c in api_cats[p["id"]]] if api_cats and p["id"] in api_cats else None),
+                [collection_id(c) for c in api_cats[p["id"]]] if api_cats and p["id"] in api_cats else None),
             "priceMin": min(prices),
             "priceMax": max(prices),
             "card": card,
@@ -390,9 +407,9 @@ def main():
         "collections": ([{"id": c, "label": l, "count": ccounts.get(c, 0)}
                          for c, l, _ in COLLECTIONS if ccounts.get(c)]
                         if not api_cats else
-                        [{"id": slugify(n), "label": n, "count": k}
+                        [{"id": collection_id(n), "label": n, "count": k}
                          for n, k in sorted(
-                             {n: sum(1 for pr in kept if slugify(n) in pr["collections"])
+                             {n: sum(1 for pr in kept if collection_id(n) in pr["collections"])
                               for ns in api_cats.values() for n in ns}.items(),
                              key=lambda x: -x[1]) if k]),
         "products": kept,

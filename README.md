@@ -19,7 +19,7 @@ pip install "qrcode[pil]" pillow requests zxing-cpp
 ## Rebuilding after a catalog change
 
 ```bash
-python3 main.py                  # re-fetch from Fourthwall
+python3 main.py --categories-from-collections   # re-fetch, with real collections
 python3 qr_codes.py              # regenerate printable codes
 python3 verify_qr.py --live      # confirm before printing
 python3 build_site.py            # rebuild the kiosk
@@ -70,13 +70,13 @@ touch returns it to that screen and empties the bag, with a "still shopping?"
 prompt for the last 15. Both numbers are `IDLE_MS` / `WARN_MS` at the top of
 `site_src/app.js`.
 
-- 61 products, 440 variants, ~23 MB total
+- 66 products, 475 variants, ~23 MB total
 - Per-product fabric and fit specs, pulled from `products.csv`
 - QR codes are generated in the browser (`site_src/qrcode.js`, MIT). A bag is an
   arbitrary combination of variants, so its code cannot be precomputed. The code
   grows on screen as the payload grows, so a full bag stays scannable.
-- A featured front page rather than a wall of 61 items: an AoIR2026 hero, the
-  nine conference pieces, then cards into the other three collections.
+- A featured front page rather than a wall of 66 items: an AoIR2026 hero, the
+  ten conference pieces, then cards into the shop's other collections.
   "All products" sits at the bottom of the rail as the fallback
 - Categories, cross-cutting collections, search, and five sort orders
 - Tap a product photo for a full-screen viewer: pinch, double-tap or the
@@ -185,7 +185,7 @@ a product name:
 
 | `access.type` | | Booth |
 |---|---|---|
-| `PUBLIC` | 62 | listed and buyable |
+| `PUBLIC` | 67 | listed and buyable |
 | `HIDDEN` | 4 | staff/committee merch — excluded |
 | `ARCHIVED` | 5 | discontinued — excluded |
 
@@ -208,7 +208,7 @@ the first place:
   cannot print a card for one
 - `build_site.py` leaves them out of the catalogue
 
-That leaves **61 products / 440 variants** on the kiosk and **470 printable
+That leaves **66 products / 475 variants** on the kiosk and **505 printable
 cards**. Set `PUBLIC_ONLY = False` in `main.py` to print the hidden ones for
 staff; flip a product back to public or available in Fourthwall and it returns
 on the next `main.py` + `build_site.py` run.
