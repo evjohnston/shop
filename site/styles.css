@@ -615,7 +615,7 @@ main { padding-top: 0; }
 }
 .rowmore:active { color: var(--accent); }
 
-.grid.feat { grid-template-columns: repeat(auto-fill, minmax(216px, 1fr)); }
+.grid.feat { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 /* --- collection cards --- */
 .collcards {
@@ -655,7 +655,7 @@ main { padding-top: 0; }
   .hero-art .side { width: 112px; height: 140px; }
   .hero-art .center { width: 148px; height: 185px; }
   .row { margin-bottom: 38px; }
-  .grid.feat { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .grid.feat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 

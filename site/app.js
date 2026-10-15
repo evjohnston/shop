@@ -318,11 +318,20 @@
       el.heroArt.appendChild(img);
     }
 
+    // Four of each on the front page; "View all" has the rest. Apparel
+    // (anything sized) leads the conference row, ahead of patches and stickers.
+    const FRONT = 4;
+    const apparelFirst = feat.filter((p) => p.sizes.length > 1)
+      .concat(feat.filter((p) => p.sizes.length <= 1));
     el.featGrid.innerHTML = "";
-    for (const p of feat) el.featGrid.appendChild(card(p));
+    for (const p of apparelFirst.slice(0, FRONT)) el.featGrid.appendChild(card(p));
 
     // Special Requests gets its own gallery under the conference pieces.
-    const sr = inCollection(SPECIAL);
+    // The censored "impact factor" tee repeats the uncensored one, so it stays
+    // off the front page in favour of RIP Velvet Vale.
+    const sr = inCollection(SPECIAL)
+      .filter((p) => p.name !== "'Fuck impact factor' - Unisex Tee - Censored")
+      .slice(0, FRONT);
     el.srRow.hidden = !sr.length;
     el.srGrid.innerHTML = "";
     for (const p of sr) el.srGrid.appendChild(card(p));
