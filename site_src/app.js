@@ -31,6 +31,7 @@
     homeView: $("home-view"), gridView: $("grid-view"),
     heroArt: $("heroArt"), heroCta: $("heroCta"),
     featGrid: $("featGrid"), collCards: $("collCards"),
+    srRow: $("srRow"), srGrid: $("srGrid"),
     empty: $("empty"), q: $("q"), clearQ: $("clearQ"), searchWrap: $("searchWrap"),
     sort: $("sort"), home: $("home"),
     sheet: $("sheet"), back: $("back"), sheetTitle: $("sheetTitle"), sheetBody: $("sheetBody"),
@@ -288,6 +289,7 @@
     return b;
   }
 
+  const SPECIAL = "aoir2026-special-requests";
   const inCollection = (id) => DATA.products.filter((p) => p.collections.includes(id));
 
   /* --------------------------------------------------------- home view */
@@ -319,9 +321,15 @@
     el.featGrid.innerHTML = "";
     for (const p of feat) el.featGrid.appendChild(card(p));
 
+    // Special Requests gets its own gallery under the conference pieces.
+    const sr = inCollection(SPECIAL);
+    el.srRow.hidden = !sr.length;
+    el.srGrid.innerHTML = "";
+    for (const p of sr) el.srGrid.appendChild(card(p));
+
     el.collCards.innerHTML = "";
     for (const c of DATA.collections) {
-      if (c.id === "aoir2026") continue;
+      if (c.id === "aoir2026" || c.id === SPECIAL) continue;
       const items = inCollection(c.id);
       const hero = items.find((p) => p.card) || items[0];
       const b = document.createElement("button");
